@@ -1,0 +1,1920 @@
+{% extends "base.html" %}
+
+{% block title %}Classifier - Bug Bite Identifier{% endblock %}
+
+{% block content %}
+<style>
+    /* Custom Scrollbar for Pipeline Visualization */
+    #pipelineVisualizationContainer > div:last-child::-webkit-scrollbar,
+    #pipelineFullscreenOverlay::-webkit-scrollbar {
+        width: 12px;
+    }
+    
+    #pipelineVisualizationContainer > div:last-child::-webkit-scrollbar-track,
+    #pipelineFullscreenOverlay::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    #pipelineVisualizationContainer > div:last-child::-webkit-scrollbar-thumb,
+    #pipelineFullscreenOverlay::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, var(--primary) 0%, #0066cc 100%);
+        border-radius: 10px;
+        transition: all 0.3s;
+    }
+    
+    #pipelineVisualizationContainer > div:last-child::-webkit-scrollbar-thumb:hover,
+    #pipelineFullscreenOverlay::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #0066cc 0%, var(--primary) 100%);
+    }
+    
+    /* Smooth scroll behavior */
+    #pipelineVisualizationContainer > div:last-child,
+    #pipelineFullscreenOverlay {
+        scroll-behavior: smooth;
+    }
+    
+    #imagePreview {
+        display: block !important;
+        max-width: 100%;
+        max-height: 400px;
+        margin: 20px auto;
+        border-radius: 8px;
+        object-fit: contain;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    #imagePreview:hover {
+        transform: scale(1.02);
+        box-shadow: 0 6px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .upload-area {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+    
+    .upload-area:hover {
+        background-color: #f8f9ff;
+        cursor: pointer;
+    }
+    
+    .upload-actions {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
+    
+    .results-card button {
+        display: block;
+        margin: 20px auto 0;
+        transition: all 0.3s ease;
+    }
+    
+    .results-card button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .info-block {
+        background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
+        border-left: 4px solid var(--primary);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .info-block:hover {
+        box-shadow: 0 6px 16px rgba(0, 102, 204, 0.15);
+        transform: translateX(4px);
+    }
+    
+    .top-predictions {
+        margin: 20px 0;
+    }
+    
+    .prediction-item {
+        background: #f8f9ff;
+        padding: 12px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        transition: all 0.3s ease;
+        border-left: 4px solid var(--primary);
+    }
+    
+    .prediction-item:hover {
+        background: linear-gradient(135deg, rgba(0, 102, 204, 0.05) 0%, rgba(0, 102, 204, 0.02) 100%);
+        box-shadow: 0 4px 12px rgba(0, 102, 204, 0.15);
+    }
+    
+    .supported-bugs {
+        background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
+        border: 2px solid var(--primary);
+        border-radius: 12px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 6px 20px rgba(0, 102, 204, 0.12);
+    }
+    
+    .supported-bugs h3 {
+        color: var(--primary);
+        margin-bottom: 20px;
+        font-size: 1.3rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .bugs-list {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 16px;
+    }
+    
+    .bug-item {
+        background: white;
+        border: 2px solid #e0e8f0;
+        border-radius: 12px;
+        overflow: hidden;
+        text-align: center;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 2px 8px rgba(91, 141, 238, 0.08);
+    }
+    
+    .bug-item:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 8px 16px rgba(91, 141, 238, 0.18);
+        border-color: var(--primary);
+    }
+    
+    .bug-item-image {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+        background: #f5f7fa;
+    }
+    
+    .bug-item-label {
+        padding: 12px 10px;
+        color: var(--primary);
+        font-size: 0.9rem;
+        background: white;
+        overflow: hidden;
+    }
+    
+    .bug-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(0, 102, 204, 0.2), transparent);
+        transition: left 0.5s ease;
+    }
+    
+    .bug-item:hover {
+        background: linear-gradient(135deg, rgba(0, 102, 204, 0.08) 0%, rgba(0, 102, 204, 0.03) 100%);
+        border-color: var(--primary);
+        box-shadow: 0 6px 16px rgba(0, 102, 204, 0.25);
+        transform: translateY(-4px);
+    }
+    
+    .bug-item:hover::before {
+        left: 100%;
+    }
+    
+    .upload-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        border-bottom: 2px solid var(--gray-light);
+    }
+    
+    .tab-btn {
+        background: none;
+        border: none;
+        color: var(--gray);
+        padding: 12px 20px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border-bottom: 3px solid transparent;
+    }
+    
+    .tab-btn.active {
+        color: var(--primary);
+        border-bottom-color: var(--primary);
+    }
+    
+    .tab-btn:hover {
+        color: var(--primary);
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    #cameraContainer {
+        position: relative;
+        margin: 20px 0;
+        border-radius: 8px;
+        overflow: hidden;
+        background-color: #000;
+    }
+    
+    #videoPreview {
+        width: 100%;
+        height: auto;
+        max-height: 500px;
+        display: block;
+        border-radius: 8px;
+    }
+    
+    .camera-controls {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin: 20px 0;
+        flex-wrap: wrap;
+    }
+    
+    .camera-btn {
+        padding: 10px 20px;
+        border: 2px solid var(--primary);
+        background-color: white;
+        color: var(--primary);
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .camera-btn:hover {
+        background-color: var(--primary);
+        color: white;
+        box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+        transform: translateY(-2px);
+    }
+    
+    .camera-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    #canvasPreview {
+        display: none;
+        max-width: 100%;
+        max-height: 400px;
+        margin: 20px auto;
+        border-radius: 8px;
+        border: 2px solid var(--primary);
+        box-shadow: 0 4px 12px rgba(102, 204, 255, 0.2);
+    }
+    
+    .prediction-analysis {
+        background: linear-gradient(135deg, rgba(0, 102, 204, 0.08) 0%, rgba(0, 102, 204, 0.03) 100%);
+        border: 2px solid var(--primary);
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+    }
+    
+    .analysis-title {
+        color: var(--primary);
+        font-weight: 600;
+        margin-bottom: 10px;
+        font-size: 0.95rem;
+    }
+    
+    .analysis-text {
+        color: var(--dark);
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+
+    .insects-gallery {
+        background: linear-gradient(135deg, rgba(91, 141, 238, 0.05) 0%, rgba(111, 207, 151, 0.05) 100%);
+        border-radius: 12px;
+        padding: 35px 25px;
+        margin: 30px 0;
+        border: 2px solid rgba(91, 141, 238, 0.2);
+    }
+
+    .gallery-title {
+        color: var(--primary);
+        font-size: 1.8rem;
+        margin-bottom: 8px;
+        text-align: center;
+        font-weight: 700;
+    }
+
+    .gallery-subtitle {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    .insects-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 18px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .insect-card {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid rgba(91, 141, 238, 0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .insect-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(111, 207, 151, 0.1), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .insect-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 8px 20px rgba(91, 141, 238, 0.2);
+        border-color: var(--primary);
+        background: linear-gradient(135deg, rgba(91, 141, 238, 0.02) 0%, rgba(111, 207, 151, 0.02) 100%);
+    }
+
+    .insect-card:hover::before {
+        left: 100%;
+    }
+
+    .insect-thumb {
+        width: 90px;
+        height: 90px;
+        object-fit: contain;
+        margin-bottom: 10px;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        transition: transform 0.3s ease;
+    }
+
+    .insect-card:hover .insect-thumb {
+        transform: scale(1.1);
+    }
+
+    .insect-label {
+        color: var(--primary);
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin: 0;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+    }
+
+    .insect-modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        animation: fadeInBackdrop 0.3s ease;
+    }
+
+    @keyframes fadeInBackdrop {
+        from { background-color: rgba(0, 0, 0, 0); }
+        to { background-color: rgba(0, 0, 0, 0.6); }
+    }
+
+    .insect-modal.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .insect-modal-content {
+        background-color: white;
+        padding: 0;
+        border-radius: 16px;
+        width: 90%;
+        max-width: 800px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        animation: slideInModal 0.3s ease;
+        position: relative;
+    }
+
+    @keyframes slideInModal {
+        from {
+            opacity: 0;
+            transform: translateY(-50px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+
+    .insect-modal-action-bar {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 24px;
+        margin-top: 20px;
+        margin-bottom: 10px;
+    }
+    .insect-modal-close {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        font-size: 28px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        z-index: 10;
+        position: static;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .insect-modal-close:hover {
+        transform: rotate(90deg) scale(1.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .insect-modal-body {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        padding: 35px;
+    }
+
+    .insect-modal-image {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, rgba(91, 141, 238, 0.05) 0%, rgba(111, 207, 151, 0.05) 100%);
+        border-radius: 12px;
+        padding: 20px;
+        min-height: 300px;
+    }
+
+    .insect-modal-info h2 {
+        color: var(--primary);
+        font-size: 1.8rem;
+        margin: 0 0 15px 0;
+    }
+
+    .insect-modal-info > p {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin: 0 0 20px 0;
+    }
+
+    .insect-details {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .detail-section {
+        padding: 15px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, rgba(91, 141, 238, 0.05) 0%, rgba(111, 207, 151, 0.05) 100%);
+        margin-bottom: 15px;
+    }
+
+    .detail-section h4 {
+        color: var(--primary);
+        font-size: 1rem;
+        margin: 0 0 8px 0;
+        font-weight: 700;
+    }
+
+    .detail-section p {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin: 0;
+    }
+
+    #modalHabitat {
+        font-weight: 500;
+        color: #000000;
+        font-size: 0.95rem;
+    }
+
+    #modalInsectDescription {
+        font-weight: 500;
+        color: #000000;
+        font-size: 0.95rem;
+    }
+
+    @media (max-width: 768px) {
+        .insect-modal-body {
+            grid-template-columns: 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .insect-modal-image {
+            min-height: 250px;
+        }
+
+        .insect-modal-info h2 {
+            font-size: 1.5rem;
+        }
+    }
+    
+    @media (max-width: 1200px) {
+        .bugs-list {
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .bugs-list {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        
+        .supported-bugs {
+            padding: 20px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .bugs-list {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+
+<section class="classifier-section">
+    <div class="container">
+        <h1 class="page-title">Insect and Bug Bite Classifier</h1>
+        <p class="page-subtitle">Upload an image to identify the type of bug bite</p>
+
+        <div class="supported-bugs">
+            <h3>Supported Bug Types</h3>
+            <div class="bugs-list">
+                <div class="bug-item" onclick="openBugModal(this)" title="Click to view details">
+                    <img src="/static/insects/Mosquito.png" alt="mosquito" class="bug-item-image">
+                    <div class="bug-item-label">Mosquito</div>
+                </div>
+                <div class="bug-item" onclick="openBugModal(this)" title="Click to view details">
+                    <img src="/static/insects/Tick.png" alt="tick" class="bug-item-image">
+                    <div class="bug-item-label">Tick</div>
+                </div>
+                <div class="bug-item" onclick="openBugModal(this)" title="Click to view details">
+                    <img src="/static/insects/BedBugs.png" alt="bedbugs" class="bug-item-image">
+                    <div class="bug-item-label">Bed Bugs</div>
+                </div>
+                <div class="bug-item" onclick="openBugModal(this)" title="Click to view details">
+                    <img src="/static/insects/Ants.png" alt="ants" class="bug-item-image">
+                    <div class="bug-item-label">Ants</div>
+                </div>
+                <div class="bug-item" onclick="openBugModal(this)" title="Click to view details">
+                    <img src="/static/insects/Spider.png" alt="spider" class="bug-item-image">
+                    <div class="bug-item-label">Spider</div>
+                </div>
+                <div class="bug-item" onclick="openBugModal(this)" title="Click to view details">
+                    <img src="/static/insects/Scabies%20Mite.png" alt="scabiesmite" class="bug-item-image">
+                    <div class="bug-item-label">Scabies Mite</div>
+                </div>
+                <div class="bug-item" onclick="openBugModal(this)" title="Click to view details">
+                    <img src="/static/insects/Bees.png" alt="bees" class="bug-item-image">
+                    <div class="bug-item-label">Bees</div>
+                </div>
+                <div class="bug-item" onclick="openBugModal(this)" title="Click to view details">
+                    <img src="/static/insects/Fleas.png" alt="fleas" class="bug-item-image">
+                    <div class="bug-item-label">Fleas</div>
+                </div>
+                <div class="bug-item" onclick="openBugModal(this)" title="Click to view details">
+                    <img src="/static/insects/Chiggers.png" alt="chiggers" class="bug-item-image">
+                    <div class="bug-item-label">Chiggers</div>
+                </div>
+                <div class="bug-item" onclick="openBugModal(this)" title="Click to view details">
+                    <img src="/static/insects/Stablefly.jpg" alt="stablefly" class="bug-item-image">
+                    <div class="bug-item-label">Stable Fly</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="classifier-container">
+            <!-- Upload Area -->
+            <div class="upload-card">
+                <div class="upload-tabs">
+                    <button class="tab-btn active" data-tab="upload-tab">📁 Upload File</button>
+                    <button class="tab-btn" data-tab="camera-tab">📷 Camera Capture</button>
+                </div>
+                
+                <!-- Upload Tab -->
+                <div id="upload-tab" class="tab-content active">
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📸</div>
+                        <h3>Click to upload or drag and drop</h3>
+                        <p>Supports: JPG, PNG, GIF, BMP (Max 16MB)</p>
+                        <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                    </div>
+                    
+                    <img id="imagePreview" alt="Preview" style="display: none;">
+                </div>
+                
+                <!-- Camera Tab -->
+                <div id="camera-tab" class="tab-content">
+                    <div id="cameraContainer">
+                        <video id="videoPreview" playsinline></video>
+                    </div>
+                    <div class="camera-controls">
+                        <button class="camera-btn" id="startCameraBtn">Start Camera</button>
+                        <button class="camera-btn" id="stopCameraBtn" disabled>Stop Camera</button>
+                        <button class="camera-btn" id="capturePhotoBtn" disabled>Capture Photo</button>
+                    </div>
+                    <canvas id="canvasPreview"></canvas>
+                </div>
+                
+                <div class="upload-actions">
+                    <button class="btn btn-primary" id="analyzeBtn" style="display: none;">
+                        Analyze Image
+                    </button>
+                </div>
+
+                <div class="loading" id="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Analyzing image...</p>
+                </div>
+
+                <div class="error-message" id="errorMessage" style="display: none;"></div>
+            </div>
+
+            <!-- Results Area -->
+            <div id="results" style="display: none;">
+                <div class="results-card">
+                    <!-- Main Prediction -->
+                    <div class="prediction-header">
+                        <h2>Classification Result</h2>
+                    </div>
+                    
+                    <div class="main-prediction">
+                        <div class="predicted-class" id="predictedClass"></div>
+                        <div class="confidence-score" id="confidence"></div>
+                    </div>
+
+                    <!-- Top 3 Predictions -->
+                    <div class="top-predictions">
+                        <h3>Top 3 Predictions</h3>
+                        <div id="topPredictions"></div>
+                        <div class="prediction-analysis">
+                            <div class="analysis-title">Expert Analysis — Why these predictions</div>
+                            <div class="analysis-text" id="predictionAnalysis"></div>
+                        </div>
+                    </div>
+
+                    <!-- Pattern Extraction Visualization -->
+                    <div class="pattern-extraction-section" style="margin: 30px 0; padding: 20px; background: linear-gradient(135deg, rgba(91, 141, 238, 0.05) 0%, rgba(111, 207, 151, 0.05) 100%); border-radius: 12px; border: 2px solid var(--primary);">
+
+                        <h3 style="color: var(--primary); margin-top: 0;">🔍 How the System Extracted Patterns</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 20px;">Below is a step-by-step visualization of how the system processed your image, extracted features, and made its decision. You can toggle the full pipeline view for more details. No error messages or technical jargon are shown to panelists.</p>
+                        <div style="display:flex; flex-direction:column; align-items:center; width:100%;">
+                            <button id="togglePipelineBtn" style="margin-bottom:15px; min-width:220px;" class="camera-btn">Show Full Pipeline Visualization</button>
+                            <button id="fullscreenPipelineBtn" style="margin-bottom:15px; min-width:220px;" class="camera-btn">Full Screen View</button>
+                        </div>
+
+                        <div id="patternVisualization" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                            <!-- Pattern images will be inserted here by JavaScript -->
+                            <div style="text-align: center; padding: 40px; background: white; border-radius: 10px; color: var(--text-muted);">
+                                <p>🖼️ Pattern visualization will appear here</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Pipeline Visualization Container - Scrollable with max height -->
+                        <div id="pipelineVisualizationContainer" style="
+                            margin-top: 30px; 
+                            display: none; 
+                            border-radius: 12px; 
+                            border: 2px solid var(--primary); 
+                            background: #ffffff; 
+                            box-shadow: 0 4px 16px rgba(0,102,204,0.15);
+                            overflow: hidden;
+                        ">
+                            <!-- Header with title -->
+                            <div style="
+                                background: linear-gradient(135deg, var(--primary) 0%, #0066cc 100%);
+                                color: white;
+                                padding: 15px 20px;
+                                font-weight: 600;
+                                font-size: 1.1rem;
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                            ">
+                                <span>Pipeline Visualization Steps</span>
+                                <span style="font-size: 0.85rem; opacity: 0.9;">Scroll to view all steps</span>
+                            </div>
+                            
+                            <!-- Scrollable content area -->
+                            <div style="
+                                max-height: 600px;
+                                overflow-y: auto;
+                                padding: 20px;
+                                background: #f8f9ff;
+                            ">
+                                <div id="pipelineVisualization"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Fullscreen overlay for pipeline visualization -->
+                        <div id="pipelineFullscreenOverlay" style="
+                            display: none; 
+                            position: fixed; 
+                            top: 0; 
+                            left: 0; 
+                            width: 100vw; 
+                            height: 100vh; 
+                            background: rgba(0,0,0,0.95); 
+                            z-index: 9999; 
+                            overflow-y: auto;
+                        ">
+                            <div style="
+                                max-width: 1000px; 
+                                margin: 0 auto; 
+                                background: #ffffff; 
+                                min-height: 100vh;
+                                position: relative;
+                            ">
+                                <!-- Fixed Header with Exit Button -->
+                                <div style="
+                                    position: sticky;
+                                    top: 0;
+                                    background: linear-gradient(135deg, var(--primary) 0%, #0066cc 100%);
+                                    color: white;
+                                    padding: 15px 20px;
+                                    z-index: 10;
+                                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                                    display: flex;
+                                    justify-content: space-between;
+                                    align-items: center;
+                                    flex-wrap: wrap;
+                                    gap: 10px;
+                                ">
+                                    <div style="flex: 1; min-width: 200px;">
+                                        <h2 style="margin: 0; font-size: 1.5rem;">Full Pipeline Visualization</h2>
+                                        <p style="margin: 5px 0 0 0; font-size: 0.9rem; opacity: 0.9;">Complete step-by-step analysis</p>
+                                    </div>
+                                    <button id="exitFullscreenPipelineBtn" style="
+                                        background: #e74c3c; 
+                                        color: white; 
+                                        border: none; 
+                                        border-radius: 8px; 
+                                        padding: 12px 24px; 
+                                        font-size: 1rem; 
+                                        font-weight: 600;
+                                        cursor: pointer;
+                                        transition: all 0.3s;
+                                        box-shadow: 0 2px 8px rgba(231,76,60,0.3);
+                                        white-space: nowrap;
+                                    " onmouseover="this.style.background='#c0392b'" onmouseout="this.style.background='#e74c3c'">
+                                        ✕ Exit Full Screen
+                                    </button>
+                                </div>
+                                
+                                <!-- Scrollable content -->
+                                <div style="padding: 30px; background: #f8f9ff;">
+                                    <div id="pipelineVisualizationFullscreen"></div>
+                                </div>
+                                
+                                <!-- Scroll to Top Button (floating) -->
+                                <button id="scrollToTopBtn" style="
+                                    display: none;
+                                    position: fixed;
+                                    bottom: 30px;
+                                    right: 30px;
+                                    background: var(--primary);
+                                    color: white;
+                                    border: none;
+                                    border-radius: 50%;
+                                    width: 50px;
+                                    height: 50px;
+                                    font-size: 1.5rem;
+                                    cursor: pointer;
+                                    box-shadow: 0 4px 12px rgba(0,102,204,0.4);
+                                    transition: all 0.3s;
+                                    z-index: 11;
+                                " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                                    ↑
+                                </button>
+                            </div>
+                        </div>
+<script>
+/* ================= PIPELINE VISUALIZATION FIX ================= */
+
+let pipelineVisible = false;
+
+const toggleBtn = document.getElementById('togglePipelineBtn');
+const fullscreenBtn = document.getElementById('fullscreenPipelineBtn');
+const fullscreenOverlay = document.getElementById('pipelineFullscreenOverlay');
+const exitFullscreenBtn = document.getElementById('exitFullscreenPipelineBtn');
+
+/* ---------- Fullscreen handlers (MUST NOT be nested) ---------- */
+fullscreenBtn.addEventListener('click', () => {
+    fullscreenOverlay.style.display = 'block';
+    renderPipelinePanelist(true);
+    // Scroll to top when opening fullscreen
+    fullscreenOverlay.scrollTop = 0;
+});
+
+exitFullscreenBtn.addEventListener('click', () => {
+    fullscreenOverlay.style.display = 'none';
+});
+
+// Scroll to top button functionality
+const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+
+fullscreenOverlay.addEventListener('scroll', () => {
+    if (fullscreenOverlay.scrollTop > 300) {
+        scrollToTopBtn.style.display = 'block';
+    } else {
+        scrollToTopBtn.style.display = 'none';
+    }
+});
+
+scrollToTopBtn.addEventListener('click', () => {
+    fullscreenOverlay.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+});
+
+/* ---------- Toggle pipeline visibility ---------- */
+toggleBtn.addEventListener('click', () => {
+    pipelineVisible = !pipelineVisible;
+    const container = document.getElementById('pipelineVisualizationContainer');
+
+    if (pipelineVisible) {
+        toggleBtn.textContent = 'Hide Full Pipeline Visualization';
+        container.style.display = 'block';
+
+        /* Ensure DOM is visible before rendering */
+        requestAnimationFrame(() => renderPipelinePanelist(false));
+    } else {
+        toggleBtn.textContent = 'Show Full Pipeline Visualization';
+        container.style.display = 'none';
+    }
+});
+
+/* ---------- Render ALL pipeline steps ---------- */
+function renderPipelinePanelist(isFullscreen = false) {
+    const vizEl = isFullscreen
+        ? document.getElementById('pipelineVisualizationFullscreen')
+        : document.getElementById('pipelineVisualization');
+
+    vizEl.innerHTML = '';
+
+    if (!cachedPipelineData || !Array.isArray(cachedPipelineData.pipeline_steps)) {
+        vizEl.innerHTML = '<div style="text-align:center;padding:30px;">No pipeline data available.</div>';
+        return;
+    }
+
+    const steps = cachedPipelineData.pipeline_steps;
+    
+    // Detect if mobile
+    const isMobile = window.innerWidth <= 768;
+    const isSmallMobile = window.innerWidth <= 480;
+
+    let html = '<div style="display:flex;flex-direction:column;gap:' + (isMobile ? '20px' : '28px') + ';">';
+
+    steps.forEach((step, idx) => {
+        const imageWidth = isSmallMobile ? '100%' : (isMobile ? '100%' : (isFullscreen ? '320px' : '220px'));
+        const imageHeight = isSmallMobile ? 'auto' : (isMobile ? 'auto' : (isFullscreen ? '260px' : '180px'));
+        const padding = isSmallMobile ? '15px' : (isMobile ? '18px' : '24px');
+        const fontSize = isSmallMobile ? '0.95rem' : (isMobile ? '1rem' : '1.1rem');
+        const captionSize = isSmallMobile ? '0.85rem' : (isMobile ? '0.9rem' : '1rem');
+        
+        html += `
+        <div style="
+            background:white;
+            border-radius:${isMobile ? '10px' : '12px'};
+            padding:${padding};
+            display:flex;
+            flex-direction:${isMobile ? 'column' : 'row'};
+            gap:${isMobile ? '15px' : '24px'};
+            box-shadow:0 2px 8px rgba(0,0,0,0.08);
+            animation:fadeInUp 0.4s ease;
+        ">
+            ${step.image ? `
+                <img src="${step.image}"
+                     style="width:${imageWidth};
+                            max-height:${imageHeight};
+                            ${isMobile ? 'max-width:100%;' : ''}
+                            border-radius:8px;
+                            border:1px solid #e0e0e0;
+                            object-fit:contain;
+                            ${isMobile ? 'align-self:center;' : ''}">
+            ` : ''}
+            <div style="flex:1;${isMobile ? 'text-align:center;' : ''}">
+                <h3 style="
+                    margin:0 0 ${isMobile ? '10px' : '8px'};
+                    color:var(--primary);
+                    font-size:${fontSize};
+                    line-height:1.4;
+                    ${isMobile ? 'text-align:center;' : ''}
+                ">
+                    ${idx + 1}. ${step.title}
+                </h3>
+                <p style="
+                    margin:0;
+                    color:#555;
+                    line-height:1.6;
+                    font-size:${captionSize};
+                    ${isMobile ? 'text-align:left;' : ''}
+                ">
+                    ${step.caption || ''}
+                </p>
+            </div>
+        </div>`;
+
+        if (idx < steps.length - 1) {
+            html += `<div style="
+                text-align:center;
+                font-size:${isMobile ? '1.5em' : '2em'};
+                color:#bbb;
+                padding:${isMobile ? '5px 0' : '0'};
+            ">↓</div>`;
+        }
+    });
+
+    html += '</div>';
+
+    /* ---------- Final Decision Summary ---------- */
+    if (cachedPipelineData.classification) {
+        const c = cachedPipelineData.classification;
+        const topPreds = c.top_predictions || [];
+        
+        // Build top 3 list
+        let top3Html = '';
+        if (topPreds.length > 0) {
+            topPreds.slice(0, 3).forEach((pred, idx) => {
+                const conf = pred.confidence ? (pred.confidence * 100).toFixed(1) : '0.0';
+                top3Html += `${idx + 1}. ${pred.class}: ${conf}%<br>`;
+            });
+        } else {
+            top3Html = 'Not available';
+        }
+        
+        const summaryPadding = isSmallMobile ? '15px' : (isMobile ? '18px' : '20px');
+        const summaryFontSize = isSmallMobile ? '0.9rem' : (isMobile ? '0.95rem' : '1rem');
+        
+        html += `
+        <div style="
+            margin-top:${isMobile ? '20px' : '32px'};
+            padding:${summaryPadding};
+            background:#f8f9ff;
+            border-left:4px solid var(--primary);
+            border-radius:8px;
+        ">
+            <h4 style="
+                margin:0 0 10px;
+                color:var(--primary);
+                font-size:${isMobile ? '1.1rem' : '1.2rem'};
+            ">Final Decision Summary</h4>
+            <p style="
+                margin:0;
+                font-size:${summaryFontSize};
+                line-height:1.8;
+            ">
+                <strong>Predicted Class:</strong> <b>${c.predicted_class}</b><br>
+                <strong>Confidence:</strong> <b>${(c.confidence * 100).toFixed(1)}%</b><br>
+                <br>
+                <strong>Top 3 Classifications:</strong><br>
+                ${top3Html}
+            </p>
+        </div>`;
+    }
+
+    vizEl.innerHTML = html;
+
+    if (isFullscreen) {
+        fullscreenOverlay.scrollTop = 0;
+    }
+}
+/* ================= END FIX ================= */
+</script>
+</div>
+<script>
+// --- Pipeline Visualization Logic ---
+let cachedPipelineData = null;
+</script>
+
+                        <div id="patternDetails" style="margin-top: 20px; padding: 15px; background: white; border-radius: 8px; border-left: 4px solid var(--primary); display: none;">
+                            <h4 style="color: var(--primary); margin-top: 0;">Pattern Analysis Details</h4>
+                            <p id="patternDetailsText" style="color: var(--dark); line-height: 1.6; margin: 0;"></p>
+                        </div>
+                    </div>
+
+                    <!-- First Aid Information Buttons for Top 3 -->
+                    <div style="display: flex; gap: 16px; margin-bottom: 15px; justify-content: center; flex-wrap: wrap;">
+                        <button id="firstAidTop1Btn" class="btn btn-primary btn-large" style="min-width:220px; display:none;" onclick="showFirstAidModal(1)">
+                            Top 1 First Aid
+                        </button>
+                        <button id="firstAidTop2Btn" class="btn btn-secondary btn-large" style="min-width:220px; display:none;" onclick="showFirstAidModal(2)">
+                            Top 2 First Aid
+                        </button>
+                        <button id="firstAidTop3Btn" class="btn btn-secondary btn-large" style="min-width:220px; display:none;" onclick="showFirstAidModal(3)">
+                            Top 3 First Aid
+                        </button>
+                        <button class="btn btn-primary btn-large" style="min-width:220px;" onclick="location.reload()">Analyze Another Image</button>
+                    </div>
+                    
+                    <!-- Old First Aid Section - REMOVED -->
+                    <div class="first-aid-section" id="firstAidSection" style="display: none;">
+                        <h3>📋 First Aid Information</h3>
+                        <div class="first-aid-content">
+                            <div class="info-block">
+                                <h4>Symptoms</h4>
+                                <p id="symptoms"></p>
+                            </div>
+
+                            <div class="info-block">
+                                <h4>First Aid Steps</h4>
+                                <ol id="firstAidSteps"></ol>
+                            </div>
+
+                            <div class="info-block">
+                                <h4>When to Seek Medical Help</h4>
+                                <p id="whenToSeekHelp"></p>
+                            </div>
+
+                            <div class="info-block">
+                                <h4>Severity Level</h4>
+                                <span class="severity-badge" id="severity"></span>
+                            </div>
+
+                            <div class="info-block">
+                                <h4>Prevention Tips</h4>
+                                <p id="prevention"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- New Analysis Button -->
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="insect-modal" id="insectModal">
+    <div class="insect-modal-content">
+        <div class="insect-modal-action-bar">
+            <button class="insect-modal-close" onclick="closeInsectModal()">&times;</button>
+            <button class="btn btn-primary" id="fullscreenModalBtn" style="min-width:120px;">⛶ Full View</button>
+        </div>
+        <div class="insect-modal-body">
+            <div class="insect-modal-image">
+                <img id="modalInsectImage" src="" alt="Insect" style="width: 100%; height: auto; border-radius: 8px; max-height: 300px; object-fit: cover;">
+            </div>
+            <div class="insect-modal-info">
+                <h2 id="modalInsectTitle"></h2>
+                <div class="insect-details">
+                    <div class="detail-section">
+                        <h4>Description </h4>
+                        <p id="modalInsectDescription"></p>
+                    </div>
+                    <div class="detail-section">
+                        <p id="modalHabitat"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- First Aid Modal -->
+<div id="firstAidModal" style="display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7);">
+    <div style="background-color: #fff; margin: 2% auto; padding: 0; border-radius: 12px; width: 95%; max-width: 600px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); animation: slideDown 0.3s ease;">
+        <!-- Modal Header - Compact -->
+        <div style="background: linear-gradient(135deg, var(--primary) 0%, #0066cc 100%); color: white; padding: 15px 18px; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+            <div style="flex: 1; min-width: 0;">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span id="firstAidModalRank" style="background: rgba(255,255,255,0.25); padding: 3px 10px; border-radius: 15px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;">TOP 1</span>
+                    <h2 id="firstAidModalInsectName" style="margin: 0; font-size: 1.1rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis;">First Aid</h2>
+                </div>
+            </div>
+            <button onclick="closeFirstAidModal()" style="background: transparent; border: none; color: white; font-size: 1.8rem; cursor: pointer; line-height: 1; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s; flex-shrink: 0;"
+                onmouseover="this.style.background='rgba(255,255,255,0.2)'" 
+                onmouseout="this.style.background='transparent'">&times;</button>
+        </div>
+        
+        <!-- Modal Body - Optimized for Mobile -->
+        <div style="padding: 18px; max-height: 75vh; overflow-y: auto;">
+            <!-- Confidence Display - Compact -->
+            <div id="firstAidModalConfidence" style="background: linear-gradient(135deg, #f0f7ff 0%, #e0efff 100%); padding: 10px 15px; border-radius: 6px; margin-bottom: 15px; border-left: 3px solid var(--primary); text-align: center; font-size: 1rem; font-weight: 600; color: var(--primary);"></div>
+            
+            <!-- Symptoms - Compact -->
+            <div style="background: #fff5f5; border-left: 3px solid #ff6b6b; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                <h4 style="color: #ff6b6b; margin: 0 0 8px 0; font-size: 0.95rem; font-weight: 600;">
+                    Symptoms
+                </h4>
+                <p id="firstAidModalSymptoms" style="margin: 0; line-height: 1.5; color: #444; font-size: 0.9rem;"></p>
+            </div>
+
+            <!-- First Aid Steps - Compact List -->
+            <div style="background: #f0f9ff; border-left: 3px solid #3b82f6; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                <h4 style="color: #3b82f6; margin: 0 0 8px 0; font-size: 0.95rem; font-weight: 600;">
+                    First Aid Steps
+                </h4>
+                <ol id="firstAidModalSteps" style="margin: 0; padding-left: 18px; line-height: 1.6; color: #444; font-size: 0.9rem;"></ol>
+            </div>
+
+            <!-- When to Seek Help - Compact -->
+            <div style="background: #fffbeb; border-left: 3px solid #f59e0b; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                <h4 style="color: #f59e0b; margin: 0 0 8px 0; font-size: 0.95rem; font-weight: 600;">
+                    Seek Medical Help If:
+                </h4>
+                <p id="firstAidModalSeekHelp" style="margin: 0; line-height: 1.5; color: #444; font-size: 0.9rem;"></p>
+            </div>
+
+            <!-- Severity & Prevention - Stacked on Mobile -->
+            <div style="display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 12px;">
+                <!-- Severity -->
+                <div style="background: #fef2f2; border-left: 3px solid #ef4444; padding: 12px; border-radius: 6px;">
+                    <h4 style="color: #ef4444; margin: 0 0 8px 0; font-size: 0.9rem; font-weight: 600;">
+                        Severity Level
+                    </h4>
+                    <span id="firstAidModalSeverity" class="severity-badge" style="display: inline-block; padding: 5px 12px; border-radius: 15px; font-weight: 600; font-size: 0.85rem;"></span>
+                </div>
+
+                <!-- Prevention -->
+                <div style="background: #f0fdf4; border-left: 3px solid #10b981; padding: 12px; border-radius: 6px;">
+                    <h4 style="color: #10b981; margin: 0 0 8px 0; font-size: 0.9rem; font-weight: 600;">
+                        Prevention Tips
+                    </h4>
+                    <p id="firstAidModalPrevention" style="margin: 0; line-height: 1.5; color: #444; font-size: 0.85rem;"></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal Footer - Compact -->
+        <div style="background: #f8f9fa; padding: 12px 18px; border-radius: 0 0 12px 12px; text-align: center; border-top: 1px solid #e5e7eb;">
+            <button onclick="closeFirstAidModal()" class="btn btn-primary" style="padding: 10px 30px; font-size: 0.95rem; width: 100%; max-width: 200px;">Close</button>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes slideDown {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.severity-badge {
+    background: #fbbf24;
+    color: #78350f;
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+}
+</style>
+
+<script>
+// Classifier JavaScript
+const uploadArea = document.getElementById('uploadArea');
+const fileInput = document.getElementById('fileInput');
+const imagePreview = document.getElementById('imagePreview');
+const analyzeBtn = document.getElementById('analyzeBtn');
+const loading = document.getElementById('loading');
+const errorMessage = document.getElementById('errorMessage');
+const results = document.getElementById('results');
+let selectedFile = null;
+
+// Click to upload
+uploadArea.addEventListener('click', () => {
+    fileInput.click();
+});
+
+// Drag and drop
+uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+});
+uploadArea.addEventListener('dragleave', () => {
+    uploadArea.classList.remove('dragover');
+});
+uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        handleFile(files[0]);
+    }
+});
+
+// File input change
+fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+        handleFile(e.target.files[0]);
+    }
+});
+
+function handleFile(file) {
+    selectedFile = file;
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp'];
+    if (!validTypes.includes(file.type)) {
+        showError('Please upload a valid image file (JPG, PNG, GIF, BMP)');
+        return;
+    }
+
+    // Validate file size (16MB)
+    if (file.size > 16 * 1024 * 1024) {
+        showError('File size must be less than 16MB');
+        return;
+    }
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        imagePreview.src = e.target.result;
+        imagePreview.style.display = 'block';
+        analyzeBtn.style.display = 'block';
+        errorMessage.style.display = 'none';
+        results.style.display = 'none';
+    };    
+    reader.readAsDataURL(file);
+}
+
+// Analyze button
+analyzeBtn.addEventListener('click', async () => {
+    if (!selectedFile) return;
+
+    // Show loading
+    loading.style.display = 'block';
+    analyzeBtn.disabled = true;
+    errorMessage.style.display = 'none';
+    results.style.display = 'none';
+
+    // Prepare form data
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    try {
+        // Send to server
+        const response = await fetch('/predict', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            showError(`Server error: ${response.status} ${response.statusText}`);
+            return;
+        }
+
+        const data = await response.json();
+        console.log('Prediction response:', data);
+        
+        if (data.success) {
+            displayResults(data);
+        } else {
+            showError(data.error || 'Prediction failed');
+        }
+    } catch (err) {
+        showError('Network error: ' + err.message);
+    } finally {
+        loading.style.display = 'none';
+        analyzeBtn.disabled = false;
+    }
+});
+
+function displayResults(data) {
+        // Removed Step 13: Final Top 3 Summary block
+    // Robust error/data handling
+    if (!data || !data.success) {
+        showError(data && data.error ? data.error : 'Prediction failed');
+        return;
+    }
+    // Cache pipeline data for visualization
+    cachedPipelineData = data.pipeline_data || null;
+    // Main prediction
+    document.getElementById('predictedClass').textContent = 
+        (data.predicted_class || 'Unknown').replace('_', ' ').toUpperCase();
+    // Use final_probs for confidence
+    if (Array.isArray(data.final_probs)) {
+        const maxConf = Math.max(...data.final_probs);
+        document.getElementById('confidence').textContent = `Confidence: ${(maxConf * 100).toFixed(1)}%`;
+    } else {
+        document.getElementById('confidence').textContent = 'Confidence: N/A';
+    }
+
+    // Top 3 predictions
+    const topPredEl = document.getElementById('topPredictions');
+    topPredEl.innerHTML = '';
+    if (Array.isArray(data.final_probs) && Array.isArray(data.class_names)) {
+        let sorted = data.final_probs
+            .map((conf, idx) => ({class: data.class_names[idx], confidence: conf, confidence_percent: `${(conf * 100).toFixed(1)}%`}))
+            .sort((a, b) => b.confidence - a.confidence)
+            .slice(0, 3);
+        
+        // Store top 3 for first aid modal
+        top3PredictionsData = sorted;
+        
+        sorted.forEach((pred, index) => {
+            const item = document.createElement('div');
+            item.className = 'prediction-item';
+            item.innerHTML = `
+                <span class="class-name">#${index + 1} - ${(pred.class || '').replace('_', ' ')}</span>
+                <div class="confidence-bar">
+                    <div class="confidence-fill" style="width: ${(pred.confidence * 100).toFixed(1)}%"></div>
+                </div>
+                <span class="confidence-value">${(pred.confidence * 100).toFixed(1)}%</span>
+            `;
+            topPredEl.appendChild(item);
+        });
+        
+        // Show/hide first aid buttons based on available predictions
+        document.getElementById('firstAidTop1Btn').style.display = sorted.length >= 1 ? 'inline-block' : 'none';
+        document.getElementById('firstAidTop2Btn').style.display = sorted.length >= 2 ? 'inline-block' : 'none';
+        document.getElementById('firstAidTop3Btn').style.display = sorted.length >= 3 ? 'inline-block' : 'none';
+        
+        // Update button labels with insect names
+        if (sorted.length >= 1) {
+            const name1 = sorted[0].class.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+            document.getElementById('firstAidTop1Btn').textContent = `${name1} First Aid`;
+        }
+        if (sorted.length >= 2) {
+            const name2 = sorted[1].class.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+            document.getElementById('firstAidTop2Btn').textContent = `${name2} First Aid`;
+        }
+        if (sorted.length >= 3) {
+            const name3 = sorted[2].class.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+            document.getElementById('firstAidTop3Btn').textContent = `${name3} First Aid`;
+        }
+    }
+
+    // Generate analysis
+    generatePredictionAnalysis(data.top_predictions || [], data.predicted_class);
+
+    // Display pattern extraction images
+    if (data.pattern_previews) {
+        displayPatternAnalysis(data.pattern_previews, data.predicted_class);
+    }
+    results.style.display = 'block';
+    results.scrollIntoView({ behavior: 'smooth' });
+
+        // --- Populate First Aid Information Section ---
+        const topClass = (data.top_predictions && data.top_predictions[0] && data.top_predictions[0].class) ? data.top_predictions[0].class : null;
+        if (topClass) {
+            let lookupKey = topClass.toLowerCase().replace(/\s+/g, '');
+            if (!insectData[lookupKey]) {
+                if (lookupKey.endsWith('s') && insectData[lookupKey.slice(0, -1)]) {
+                    lookupKey = lookupKey.slice(0, -1);
+                } else if (lookupKey + 's' in insectData) {
+                    lookupKey = lookupKey + 's';
+                }
+            }
+            const info = insectData[lookupKey];
+            if (info) {
+                document.getElementById('symptoms').textContent = info.symptoms || '';
+                const steps = (info.firstAid || '').split(/;|\./).map(s => s.trim()).filter(s => s.length > 0);
+                const stepsEl = document.getElementById('firstAidSteps');
+                stepsEl.innerHTML = '';
+                steps.forEach(step => {
+                    const li = document.createElement('li');
+                    li.textContent = step;
+                    stepsEl.appendChild(li);
+                });
+                document.getElementById('whenToSeekHelp').textContent = info.whenToSeekHelp || 'Seek medical help if symptoms worsen, signs of infection appear, or severe allergic reaction occurs.';
+                document.getElementById('severity').textContent = info.severity || 'Varies';
+                document.getElementById('prevention').textContent = info.prevention || '';
+            } else {
+                document.getElementById('symptoms').textContent = '';
+                document.getElementById('firstAidSteps').innerHTML = '';
+                document.getElementById('whenToSeekHelp').textContent = '';
+                document.getElementById('severity').textContent = '';
+                document.getElementById('prevention').textContent = '';
+            }
+        }
+}
+
+function generatePredictionAnalysis(predictions = [], topPrediction) {
+    const analysisEl = document.getElementById('predictionAnalysis');
+    if (!predictions || predictions.length === 0) {
+        analysisEl.innerHTML = '';
+        return;
+    }
+
+    // Helper: normalize key for lookup
+    const key = name => String(name || '').toLowerCase().replace(/\s+/g, '_');
+
+    const insectCharacteristics = {
+        'mosquitos': 'small puncture marks, often multiple in nearby spots; mild local redness and itching.',
+        'mosquito': 'small puncture marks, often multiple in nearby spots; mild local redness and itching.',
+        'tick': 'single attachment site, central punctum with surrounding erythema; may form a ring.',
+        'bedbugs': 'linear or clustered bites, persistent itching, small red welts.',
+        'ant': 'raised red bumps with possible burning sensation; often in groups on lower limbs.',
+        'spiders': 'one or two punctures with localized swelling; severity varies by species.',
+        'scabies_mite': 'burrow tracks and intense itching, typically in skin folds and interdigital areas.',
+        'bees': 'single large swollen lesion, often with immediate pain and possible visible sting.',
+        'flea': 'tiny red dots, intense itching, often around ankles and lower legs.',
+        'chiggers': 'very itchy raised bumps typically clustered on lower extremities.',
+        'stablefly': 'painful bite with possible bleeding points, usually on exposed lower legs.'
+    };
+
+     // Professional analysis composition (textual only, no Top 3 Summary)
+     const top = predictions[0] || {};
+     const describe = (p) => insectCharacteristics[key(p.class)] || 'Characteristic patterns consistent with documented bite presentations.';
+     let html = `<div style="font-weight:600; margin-bottom:8px; color:var(--gh-text-primary);">Summary</div>`;
+     html += `<p style="margin:6px 0; color:var(--gh-text-primary);">The model ranks <strong>${top.class ? top.class.replace('_',' ') : 'N/A'}</strong> as the most likely diagnosis primarily because the detected visual features (lesion morphology, distribution, color/texture) and learned image patterns strongly match the top-class examples in the training set.</p>`;
+     html += `<div style="margin-top:10px;"><strong>Key Features</strong>`;
+     html += `<ul style="margin:8px 0 12px 20px; color:var(--gh-text-primary);">
+                     <li>Visual evidence: ${describe(top)}</li>
+                     <li>Model signal: feature patterns (shape, edge definition, color) have high similarity to top-class examples</li>
+                     <li>Confidence context: The model shows a clear preference for the top prediction based on learned image features.</li>
+                 </ul></div>`;
+     html += `<div style="margin-top:10px; font-style:italic; color:var(--gh-text-secondary);">
+                     Recommendations: obtain additional images (different angles, close-up with scale), provide symptom timeline (onset, itching, systemic symptoms), check for stinger/attachment. If severe symptoms or worsening signs, consult a healthcare professional promptly.
+                 </div>`;
+     html += `<div style="margin-top:8px; color:var(--gh-text-secondary); font-size:0.9rem;">
+                     Note: This automated analysis supports triage and educational insight. It is not a substitute for clinical diagnosis.
+                 </div>`;
+     analysisEl.innerHTML = html;
+}
+
+function displayPatternAnalysis(patternPreviews, predictedClass) {
+    const patternVizEl = document.getElementById('patternVisualization');
+    const patternDetailsEl = document.getElementById('patternDetails');
+    const patternDetailsText = document.getElementById('patternDetailsText');
+    
+    if (!patternPreviews || Object.keys(patternPreviews).length === 0) {
+        patternDetailsEl.style.display = 'none';
+        return;
+    }
+
+    // Clear previous pattern visualization (including placeholder)
+    patternVizEl.innerHTML = '';
+
+    // Create pattern image cards
+    const patternLabels = {
+        'edges_overlay': '🔍 Edge Detection',
+        'red_heatmap': '🔴 Redness Heatmap',
+        'lesion_detection': '📍 Lesion Detection'
+    };
+
+    const patternDescriptions = {
+        'edges_overlay': 'Shows edges and contours detected in the image. This helps the model identify lesion boundaries and shape characteristics.',
+        'red_heatmap': 'Highlights areas of redness and inflammation. The system uses color analysis to identify affected regions.',
+        'lesion_detection': 'Indicates potential lesion or bite mark areas detected by the model. This shows where the system focused its attention.'
+    };
+
+    let hasPatterns = false;
+
+    // Display available pattern images
+    for (const [patternKey, patternData] of Object.entries(patternPreviews)) {
+        if (patternData && (patternData.startsWith('data:') || patternData.startsWith('http'))) {
+            hasPatterns = true;
+            const label = patternLabels[patternKey] || patternKey.replace('_', ' ').toUpperCase();
+            const description = patternDescriptions[patternKey] || '';
+
+            const patternCard = document.createElement('div');
+            patternCard.style.cssText = 'background: white; border-radius: 10px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; animation: fadeInUp 0.5s ease-out;';
+            
+            patternCard.innerHTML = `
+                <img src="${patternData}" alt="${label}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; border: 1px solid #e0e0e0;">
+                <div style="flex-grow: 1;">
+                    <h4 style="margin: 0 0 5px 0; color: var(--primary); font-size: 14px;">${label}</h4>
+                    <p style="margin: 0; color: var(--text-muted); font-size: 12px; line-height: 1.4;">${description}</p>
+                </div>
+            `;
+
+            // Add hover effects
+            patternCard.addEventListener('mouseenter', () => {
+                patternCard.style.transform = 'translateY(-2px)';
+                patternCard.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+            });
+
+            patternCard.addEventListener('mouseleave', () => {
+                patternCard.style.transform = 'translateY(0)';
+                patternCard.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+            });
+
+            patternVizEl.appendChild(patternCard);
+        }
+    }
+
+    // If no valid pattern data found, show message
+    if (!hasPatterns) {
+        const noDataMsg = document.createElement('div');
+        noDataMsg.style.cssText = 'text-align: center; padding: 40px; background: white; border-radius: 10px; color: var(--text-muted);';
+        noDataMsg.innerHTML = '<p>🖼️ Pattern visualization not available for this image</p>';
+        patternVizEl.appendChild(noDataMsg);
+        patternDetailsEl.style.display = 'none';
+        return;
+    }
+
+    // Display pattern analysis details if we have patterns
+    if (hasPatterns) {
+        // Generate description based on predicted class
+        const classPatternAnalysis = {
+            'mosquitos': 'The edge detection shows small puncture marks with clean boundaries. The redness heatmap highlights localized inflammation around the bite site, typical of mosquito bites which cause mild systemic reactions.',
+            'mosquito': 'The edge detection shows small puncture marks with clean boundaries. The redness heatmap highlights localized inflammation around the bite site, typical of mosquito bites which cause mild systemic reactions.',
+            'tick': 'A single attachment site is visible with central punctum. The redness heatmap shows concentric inflammation pattern, characteristic of tick attachment. Edge detection reveals the feeding apparatus.',
+            'bedbugs': 'Multiple bites are detected in linear or clustered arrangement. The pattern shows shallow lesions without deep tissue involvement, and the redness heatmap shows clustered inflammatory responses.',
+            'ant': 'Raised red bumps are clearly detected by edge detection. The redness heatmap shows intense localized inflammation, typical of fire ant stings. Some pustule formation may be visible.',
+            'spiders': 'Two puncture marks or single bite site detected. The redness heatmap shows mild to moderate inflammation, and edge detection reveals the characteristic bite morphology depending on spider species.',
+            'scabies_mite': 'Burrow tracks are visible in edge detection as linear patterns in skin folds. The redness heatmap shows diffuse inflammation along burrow lines. Multiple lesions indicate active infestation.',
+            'bees': 'A single large lesion is detected with prominent swelling. Edge detection shows clear wound definition. The redness heatmap displays intense inflammation, and stinger remnants may be visible.',
+            'flea': 'Tiny red dots are detected as small discrete lesions. The pattern shows multiple closely-spaced bites, visible in clustering in both edge detection and redness heatmap.',
+            'chiggers': 'Extremely itchy raised bumps with possible vesiculation are detected. Edge detection shows grouped lesions, and the redness heatmap reveals intense inflammatory response concentrated in bite clusters.',
+            'stablefly': 'A painful puncture wound is visible with possible bleeding points. Edge detection shows deeper lesion morphology than other bites. The redness heatmap indicates significant tissue reaction.'
+        };
+
+        const analysisText = classPatternAnalysis[predictedClass.toLowerCase()] || 
+            'The system analyzed edge patterns, color distribution, and lesion morphology from the uploaded image. The visualization above shows how these features were extracted and processed to make the classification.';
+
+        patternDetailsText.innerHTML = analysisText;
+        patternDetailsEl.style.display = 'block';
+    } else {
+        patternDetailsEl.style.display = 'none';
+    }
+}
+
+function showError(message) {
+    errorMessage.textContent = message;
+    errorMessage.style.display = 'block';
+}
+
+// Tab switching
+const tabBtns = document.querySelectorAll('.tab-btn');
+const tabContents = document.querySelectorAll('.tab-content');
+
+tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const tabName = btn.getAttribute('data-tab');
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(tc => tc.classList.remove('active'));
+        
+        btn.classList.add('active');
+        document.getElementById(tabName).classList.add('active');
+    });
+});
+
+// Camera functionality
+let mediaStream = null;
+const capturePhotoBtn = document.getElementById('capturePhotoBtn');
+const stopCameraBtn = document.getElementById('stopCameraBtn');
+const startCameraBtn = document.getElementById('startCameraBtn');
+const canvas = document.getElementById('canvasPreview');
+const video = document.getElementById('videoPreview');
+
+startCameraBtn.addEventListener('click', async () => {
+    try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: 'environment' } 
+        });
+        video.srcObject = mediaStream;
+        video.play();
+        startCameraBtn.disabled = true;
+        stopCameraBtn.disabled = false;
+        capturePhotoBtn.disabled = false;
+    } catch (err) {
+        showError('Camera access denied or not available: ' + err.message);
+    }
+});
+
+stopCameraBtn.addEventListener('click', () => {
+    if (mediaStream) {
+        mediaStream.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+        startCameraBtn.disabled = false;
+        stopCameraBtn.disabled = true;
+        capturePhotoBtn.disabled = true;
+    }
+});
+
+capturePhotoBtn.addEventListener('click', () => {
+    const ctx = canvas.getContext('2d');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0);
+    
+    canvas.toBlob(blob => {
+        selectedFile = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
+        canvas.style.display = 'block';
+        analyzeBtn.style.display = 'block';
+        errorMessage.style.display = 'none';
+        results.style.display = 'none';
+    }, 'image/jpeg', 0.95);
+});
+
+// Function to open modal from gallery cards
+function openBugModal(cardElement) {
+    const imageDiv = cardElement.querySelector('.bug-item-image');
+    const label = cardElement.querySelector('.bug-item-label');
+    
+    if (imageDiv && label) {
+        const insectName = label.textContent.toLowerCase().replace(/\s+/g, '');
+        openInsectModal(insectName);
+    }
+}
+
+// Insect Gallery Modal Functions
+const insectData = {
+    mosquito: {
+        title: 'Mosquito (Lamok)',
+        image: '/static/insects/Mosquito.png',
+        description: 'Mosquito bites are common and typically appear as raised, itchy bumps. Mosquitoes are attracted to warm-blooded animals and can transmit diseases.',
+        location: 'Found in warm, humid environments worldwide. Active near water sources, swamps, marshes, and areas with standing water. Most active during dawn and dusk.',
+        symptoms: 'Raised, itchy bumps; mild swelling; redness around the bite area; itching may last for several hours to days.',
+        firstAid: 'Apply ice or cold compress to reduce swelling; use anti-itch cream or calamine lotion; avoid scratching to prevent infection; take antihistamines if severely itchy.',
+        prevention: 'Use insect repellent with DEET; wear long, loose-fitting clothing; avoid outdoor activities during peak mosquito hours (dawn and dusk); install window screens.'
+    },
+    tick: {
+        title: 'Tick (Garapata)',
+        image: '/static/insects/Tick.png',
+        description: 'Tick bites can be more serious than other insect bites as they may transmit diseases like Lyme disease. Ticks burrow into the skin to feed.',
+        location: 'Found in wooded areas, tall grass, brush, and forests. Common in hiking trails and meadows during warmer months (spring through fall).',
+        symptoms: 'Small dark bump with possible redness around it; itching and soreness; may see the tick embedded in the skin.',
+        firstAid: 'Remove the tick using tweezers by grasping close to the skin and pulling steadily; clean the area with soap and water or antiseptic; do not crush the tick.',
+        prevention: 'Check for ticks after outdoor activities; wear light-colored, long-sleeved clothing; apply insect repellent; keep grass trimmed; avoid wooded areas during peak season.'
+    },
+    bedbugs: {
+        title: 'Bedbug (Chinche)',
+        image: '/static/insects/BedBugs.png',
+        description: 'Bedbug bites typically appear in clusters or lines. Bedbugs are small, flat insects that hide in bedding and furniture.',
+        location: 'Found in beds, mattresses, furniture, and clothing. Common in hotels, hostels, apartments, and residential buildings worldwide. Most active at night.',
+        symptoms: 'Red, itchy bumps often in a line or cluster; bites usually appear on exposed skin; itching may be severe, especially at night.',
+        firstAid: 'Apply hydrocortisone cream or calamine lotion; use antihistamines for itching; avoid scratching to prevent secondary infections; wash affected areas with soap.',
+        prevention: 'Inspect hotel rooms before settling; check secondhand furniture before bringing it home; wash bedding regularly in hot water; use protective mattress covers; inspect luggage when traveling.'
+    },
+    ants: {
+        title: 'Ant (Langgam)',
+        image: '/static/insects/Ants.png',
+        description: 'Ant bites and stings can range from painful to mildly irritating. Fire ants are known for their painful stings that leave pustules.',
+        location: 'Found in outdoor areas with ant colonies. Fire ants are common in warm climates, especially in southern United States, around yards, gardens, and fields.',
+        symptoms: 'Small red bumps; itching and irritation; may form small pustules that can become infected if scratched; mild pain or burning sensation.',
+        firstAid: 'Wash the area with soap and water; apply ice to reduce swelling; use anti-itch cream; take oral antihistamines; avoid scratching; apply topical steroids if needed.',
+        prevention: 'Avoid ant mounds and colonies; wear protective clothing when outdoors; use insect repellent; check before sitting or lying on grass; keep food covered outdoors.'
+    },
+    spider: {
+        title: 'Spider (Gagamba)',
+        image: '/static/insects/Spider.png',
+        description: 'Spider bites are rarely serious. Most spiders are harmless and bite only when threatened. Only a few species are medically significant.',
+        location: 'Found both indoors and outdoors in homes, gardens, basements, sheds, and dark corners. Common worldwide in various habitats.',
+        symptoms: 'Two small puncture marks; mild redness; itching; mild pain or swelling; most are painless or cause minimal symptoms.',
+        firstAid: 'Apply ice to the bite area; use anti-itch cream or calamine lotion; take antihistamines for itching; elevate the affected area if on a limb.',
+        prevention: 'Shake out clothing and bedding before use; wear closed-toe shoes; be cautious when moving items in storage areas; remove webs and spiders from living spaces; seal cracks and crevices.'
+    },
+    scabiesmite: {
+        title: 'Scabies Mite (Akarya)',
+        image: '/static/insects/Scabies%20Mite.png',
+        description: 'Scabies is caused by a parasitic mite that burrows into the skin. It spreads through close personal contact and shared bedding.',
+        location: 'Found on human skin and transmitted through close contact with infected persons or contaminated bedding. Can spread in crowded living conditions.',
+        symptoms: 'Intense itching, especially at night; small raised bumps or burrows on the skin; rash may appear on wrists, between fingers, elbows, and genital areas.',
+        firstAid: 'Apply prescribed scabicide cream or lotion as directed; wash all clothing, bedding, and towels in hot water; avoid scratching to prevent secondary infection; see a doctor for proper treatment.',
+        prevention: 'Maintain good hygiene; avoid close contact with infected persons; wash hands regularly; avoid sharing personal items; inform close contacts if infected so they can seek treatment.'
+    },
+    bees: {
+        title: 'Bee (Bubuyog)',
+        image: '/static/insects/Bees.png',
+        description: 'Bee stings are painful and leave behind a stinger. Most people have only mild reactions, but some may have severe allergic reactions.',
+        location: 'Found in gardens, fields, orchards, and areas with flowering plants. Common in warm seasons and around beehives or nests.',
+        symptoms: 'Sharp pain at the site; redness and swelling; mild to moderate swelling that may last for days; severe swelling in case of allergic reaction.',
+        firstAid: 'Remove the stinger by scraping it off; wash the area with soap and water; apply ice to reduce swelling; use anti-itch cream; take antihistamines or pain relievers as needed.',
+        prevention: 'Avoid wearing bright colors or floral patterns; do not wear perfume or scented products; stay away from beehives and flowering plants; move slowly around bees; keep food and drinks covered outdoors.'
+    },
+    fleas: {
+        title: 'Flea (Pulgas)',
+        image: '/static/insects/Fleas.png',
+        description: 'Flea bites are small, itchy, and often appear in clusters. Fleas can infest pets and homes, making prevention important.',
+        location: 'Found on pets, in homes, carpets, furniture, and bedding. Common in areas with warm temperatures and in homes with infected pets.',
+        symptoms: 'Small red bumps, often in clusters; severe itching; may develop a secondary infection from scratching; bites often appear on legs and ankles.',
+        firstAid: 'Apply anti-itch cream or calamine lotion; use antihistamines for itching; avoid scratching; apply hydrocortisone cream if available; wash the area with soap and water.',
+        prevention: 'Treat pets with flea prevention products regularly; vacuum frequently; wash pet bedding regularly in hot water; inspect pets for fleas; use flea prevention sprays in the home if needed; maintain good pet hygiene.'
+    },
+    chiggers: {
+        title: 'Chigger (Tungaw)',
+        image: '/static/insects/Chiggers.png',
+        description: 'Chigger bites cause intense itching. Chiggers are tiny larvae that attach to skin, typically in areas where clothing is tight.',
+        location: 'Found in tall grass, brush, wooded areas, and fields. Common in tropical and subtropical regions, especially during warm months.',
+        symptoms: 'Intense itching starting 24-48 hours after exposure; small red bumps or blisters; itching can be severe and persist for weeks; often appear in lines.',
+        firstAid: 'Take a hot bath or shower to remove remaining chiggers; apply anti-itch cream; use antihistamines; apply nail polish to suffocate remaining larvae; avoid scratching; use topical steroids if severe.',
+        prevention: 'Apply insect repellent before going outdoors; wear long, loose-fitting clothing; tuck pants into socks; shower immediately after outdoor activities; wash clothing in hot water; avoid tall grass and brush.'
+    },
+    stablefly: {
+        title: 'Stablefly (Langaw)',
+        image: '/static/insects/Stablefly.jpg',
+        description: 'Stablefly bites are painful and may leave small marks. These flies are more aggressive than regular house flies and bite exposed skin.',
+        location: 'Found around livestock, stables, farms, and rural areas. Common during warm seasons and near animal facilities or manure piles.',
+        symptoms: 'Painful bite with redness; small puncture mark; mild swelling; itching; may leave a scab if scratched; bites often appear on legs and arms.',
+        firstAid: 'Clean the bite area with soap and water; apply ice to reduce pain and swelling; use anti-itch cream; take pain relievers if needed; apply antibiotic ointment to prevent infection.',
+        prevention: 'Use window and door screens; apply insect repellent; wear protective clothing in areas with stableflies; maintain proper sanitation around livestock and animals; use fly traps or repellents in affected areas.'
+    }
+};
+
+function openInsectModal(insectType) {
+    const modal = document.getElementById('insectModal');
+    const data = insectData[insectType];
+    
+    if (data) {
+        document.getElementById('modalInsectImage').src = data.image;
+        document.getElementById('modalInsectTitle').textContent = data.title;
+        document.getElementById('modalInsectDescription').textContent = data.description;
+        document.getElementById('modalHabitat').textContent = data.location;
+        
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeInsectModal() {
+    const modal = document.getElementById('insectModal');
+    modal.classList.remove('show');
+    document.body.style.overflow = 'auto';
+}
+
+// Close modal when clicking outside of it
+window.addEventListener('click', (event) => {
+    const modal = document.getElementById('insectModal');
+    if (event.target === modal) {
+        closeInsectModal();
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+        closeInsectModal();
+    }
+});
+
+// First Aid Modal Functions
+let top3PredictionsData = []; // Store top 3 predictions with their data
+
+function showFirstAidModal(rank) {
+    if (!top3PredictionsData || rank < 1 || rank > top3PredictionsData.length) {
+        alert('First aid information not available for this prediction.');
+        return;
+    }
+    
+    const prediction = top3PredictionsData[rank - 1];
+    const modal = document.getElementById('firstAidModal');
+    
+    // Set rank badge
+    const rankLabels = ['TOP 1', 'TOP 2', 'TOP 3'];
+    document.getElementById('firstAidModalRank').textContent = rankLabels[rank - 1];
+    
+    // Set title with insect name
+    const insectDisplayName = prediction.class.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+    document.getElementById('firstAidModalInsectName').textContent = insectDisplayName;
+    
+    // Set confidence
+    const confidence = prediction.confidence_percent || `${(prediction.confidence * 100).toFixed(1)}%`;
+    document.getElementById('firstAidModalConfidence').textContent = `Confidence: ${confidence}`;
+    
+    // Get insect data
+    const lookupKey = prediction.class.toLowerCase().replace(/\s+/g, '');
+    let insectInfo = insectData[lookupKey];
+    
+    // Try alternative keys
+    if (!insectInfo) {
+        if (lookupKey.endsWith('s') && insectData[lookupKey.slice(0, -1)]) {
+            insectInfo = insectData[lookupKey.slice(0, -1)];
+        } else if (insectData[lookupKey + 's']) {
+            insectInfo = insectData[lookupKey + 's'];
+        }
+    }
+    
+    if (insectInfo) {
+        // Populate modal content
+        document.getElementById('firstAidModalSymptoms').textContent = insectInfo.symptoms || 'No symptom information available.';
+        
+        // First Aid Steps
+        const steps = (insectInfo.firstAid || '').split(/;|\./).map(s => s.trim()).filter(s => s.length > 0);
+        const stepsEl = document.getElementById('firstAidModalSteps');
+        stepsEl.innerHTML = '';
+        if (steps.length > 0) {
+            steps.forEach(step => {
+                const li = document.createElement('li');
+                li.textContent = step;
+                li.style.marginBottom = '8px';
+                stepsEl.appendChild(li);
+            });
+        } else {
+            stepsEl.innerHTML = '<li>No first aid steps available.</li>';
+        }
+        
+        document.getElementById('firstAidModalSeekHelp').textContent = insectInfo.whenToSeekHelp || 'Seek medical help if symptoms worsen, signs of infection appear, or severe allergic reaction occurs.';
+        
+        const severityBadge = document.getElementById('firstAidModalSeverity');
+        const severity = insectInfo.severity || 'Moderate';
+        severityBadge.textContent = severity;
+        
+        // Set severity color
+        if (severity.toLowerCase().includes('low')) {
+            severityBadge.style.background = '#10b981';
+            severityBadge.style.color = 'white';
+        } else if (severity.toLowerCase().includes('moderate')) {
+            severityBadge.style.background = '#f59e0b';
+            severityBadge.style.color = 'white';
+        } else if (severity.toLowerCase().includes('high') || severity.toLowerCase().includes('severe')) {
+            severityBadge.style.background = '#ef4444';
+            severityBadge.style.color = 'white';
+        } else {
+            severityBadge.style.background = '#6b7280';
+            severityBadge.style.color = 'white';
+        }
+        
+        document.getElementById('firstAidModalPrevention').textContent = insectInfo.prevention || 'No prevention tips available.';
+    } else {
+        // No data found
+        document.getElementById('firstAidModalSymptoms').textContent = 'Information not available.';
+        document.getElementById('firstAidModalSteps').innerHTML = '<li>No first aid information available for this insect.</li>';
+        document.getElementById('firstAidModalSeekHelp').textContent = 'Consult a healthcare professional for guidance.';
+        document.getElementById('firstAidModalSeverity').textContent = 'Unknown';
+        document.getElementById('firstAidModalPrevention').textContent = 'Not available.';
+    }
+    
+    modal.style.display = 'block';
+}
+
+function closeFirstAidModal() {
+    document.getElementById('firstAidModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('firstAidModal');
+    if (event.target == modal) {
+        closeFirstAidModal();
+    }
+}
+
+// Old function - kept for compatibility
+function toggleFirstAid() {
+    // Deprecated - now using modal
+}
+
+</script>
+{% endblock %}

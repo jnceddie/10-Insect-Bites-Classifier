@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}First Aid Guide - Bug Bite Identifier{% endblock %}
+
+{% block content %}
+<section class="first-aid-guide">
+    <div class="container">
+        <h1 class="page-title">First Aid Guide</h1>
+        <p class="page-subtitle">Comprehensive first aid information for all bug bite types</p>
+
+        <div class="first-aid-grid">
+            {% for bug_type in class_names %}
+            <div class="first-aid-card" id="{{ bug_type }}">
+                <h2 class="bug-name">{{ bug_type.replace('_', ' ').title() }}</h2>
+                
+                {% if first_aid_info[bug_type] %}
+                <div class="first-aid-details">
+                    <div class="detail-section">
+                        <h3>🔍 Symptoms</h3>
+                        <p>{{ first_aid_info[bug_type].symptoms }}</p>
+                    </div>
+
+                    <div class="detail-section">
+                        <h3>💊 First Aid Steps</h3>
+                        <ol>
+                            {% for step in first_aid_info[bug_type].first_aid %}
+                            <li>{{ step }}</li>
+                            {% endfor %}
+                        </ol>
+                    </div>
+
+                    <div class="detail-section">
+                        <h3>⚠️ When to Seek Medical Help</h3>
+                        <p>{{ first_aid_info[bug_type].when_to_seek_help }}</p>
+                    </div>
+
+                    <div class="detail-section">
+                        <h3>📊 Severity Level</h3>
+                        <span class="severity-badge 
+                            {% if 'low' in first_aid_info[bug_type].severity.lower() %}severity-low
+                            {% elif 'moderate' in first_aid_info[bug_type].severity.lower() %}severity-moderate
+                            {% else %}severity-high{% endif %}">
+                            {{ first_aid_info[bug_type].severity }}
+                        </span>
+                    </div>
+
+                    <div class="detail-section">
+                        <h3>🛡️ Prevention Tips</h3>
+                        <p>{{ first_aid_info[bug_type].prevention }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="action-section">
+            <a href="/classifier" class="btn btn-primary btn-large">Classify a Bug Bite</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

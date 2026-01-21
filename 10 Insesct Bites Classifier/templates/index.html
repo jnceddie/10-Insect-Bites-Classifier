@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Bug Bite Classifier - Home{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="container">
+        <div class="hero-content">
+            <div class="hero-title-container">
+                <img src="/static/images/logo.png" alt="Insect and Bug Bite Classifier Logo" class="hero-logo">
+                <h1 class="hero-title">Insect and Bug Bite Classifier</h1>
+            </div>
+            <p class="hero-subtitle">CNN Model-Powered Bug Bite Classifier System</p>
+            <p class="hero-description">
+                Upload an image to classify the type of bug bite and get immediate first aid guidance.
+                Our system uses deep learning to help you identify and treat bug bites safely.
+            </p>
+            <div class="hero-buttons">
+                <a href="/classifier" class="btn btn-primary btn-large" id="startClassifierBtn">Start Classification</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features">
+    <div class="container">
+        <h2 class="section-title">Key Features</h2>
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-4">
+                <div class="card feature-card h-100 p-4 text-center">
+                    <div class="feature-icon">🎯</div>
+                    <h5 class="mt-2">Accurate Classification</h5>
+                    <p class="mb-0">Uses EfficientNetB2 architecture with pattern extraction for high accuracy bug bite identification</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card feature-card h-100 p-4 text-center">
+                    <div class="feature-icon">⚡</div>
+                    <h5 class="mt-2">Real-Time Results</h5>
+                    <p class="mb-0">Get instant predictions with confidence scores in under 1 second</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card feature-card h-100 p-4 text-center">
+                    <div class="feature-icon">🏥</div>
+                    <h5 class="mt-2">First Aid Guidance</h5>
+                    <p class="mb-0">Comprehensive first aid information for immediate treatment and prevention validated by health professionals</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card feature-card h-100 p-4 text-center">
+                    <div class="feature-icon">📱</div>
+                    <h5 class="mt-2">Easy to Use</h5>
+                    <p class="mb-0">A user-friendly interface that supports both image upload via drag-and-drop and real-time image capture ensuring compatibility across desktop and mobile devices</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card feature-card h-100 p-4 text-center">
+                    <div class="feature-icon">🔬</div>
+                    <h5 class="mt-2">10 Insects and Bug Types</h5>
+                    <p class="mb-0">Identifies Mosquito, Tick, Bed Bugs, Ants, Spider, Scabies Mite, Bees, Fleas, Chiggers, and Stable Fly.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card feature-card h-100 p-4 text-center">
+                    <div class="feature-icon">✅</div>
+                    <h5 class="mt-2">Educational Tool</h5>
+                    <p class="mb-0">Learn about different bug bites, symptoms, and proper treatment</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- modal handled globally in base.html and main.js -->
+
+{% endblock %}

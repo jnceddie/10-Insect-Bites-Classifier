@@ -1,0 +1,17 @@
+{
+  "timestamp": "C:\\Users\\user\\OneDrive\\Documents\\10 Insesct Bites Classifier",
+  "models_dir": "models",
+  "models_found": [
+    "Model1.h5",
+    "best.keras",
+    "Blocker_model.keras"
+  ],
+  "patterns_found": [
+    "pattern_cache.npz",
+    "pattern_norm.npz",
+    "pattern_stats copy.npz",
+    "pattern_stats.npz",
+    "pattern_stats_efficient.npz"
+  ],
+  "status": "OK"
+}

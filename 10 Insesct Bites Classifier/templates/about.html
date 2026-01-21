@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}About - Bug Bite Identifier{% endblock %}
+
+{% block content %}
+<section class="about-section">
+    <div class="container">
+        <h1 class="page-title">About This System</h1>
+
+        <div class="about-content">
+            <div class="about-card">
+                <h2>🎓 Thesis Project</h2>
+                <p><strong>Title:</strong> Insect and Bug Bite Classification System Using Deep Learning</p>
+                <p><strong>Institution:</strong> EARIST (Eulogio "Amang" Rodriguez Institute of Science & Technology)</p>
+                <p><strong>College:</strong> College of Computing Studies</p>
+                <p><strong>Year:</strong> 2025</p>
+            </div>
+
+            <div class="about-card">
+                <h2>🎯 Project Objectives</h2>
+                <ul>
+                    <li>Develop an CNN-powered system for automatic bug bite identification</li>
+                    <li>Provide immediate first aid guidance for identified insects and bug bites</li>
+                    <li>Create an accessible, user-friendly interface for the general public</li>
+                    <li>Implement a reliable deep learning model with high accuracy</li>
+                    <li>Promote awareness about insect and bug bite identification and treatment</li>
+                </ul>
+            </div>
+
+            <div class="about-card">
+                <h2>🔬 Methodology</h2>
+                <h3>Data Collection & Preparation</h3>
+                <p>The system was trained on a comprehensive dataset of bug bite images, covering 10 different types of insect bites. The dataset includes thousands of images with proper labeling and annotation.</p>
+
+                <h3>Model Architecture</h3>
+                <p><strong>Base Architecture:</strong> EfficientNetV2B0 - A state-of-the-art efficient convolutional neural network</p>
+                <p><strong>Why EfficientNetV2B0?</strong></p>
+                <ul>
+                    <li>Optimal balance between accuracy and inference speed</li>
+                    <li>Improved training efficiency with progressive learning</li>
+                    <li>Pre-trained on ImageNet for transfer learning</li>
+                    <li>Optimized for both mobile and desktop deployment</li>
+                    <li>7.1M parameters with improved scaling and robustness</li>
+                </ul>
+                <p><strong>Innovation:</strong> Pattern-Aware Architecture with automatic feature extraction (38 features)</p>
+                <p><strong>Input:</strong> 224×224 RGB images</p>
+                <p><strong>Output:</strong> 12-class probability distribution (10 bug types + no_bites + other_skin_condition)</p>
+
+                <h3>Training Process</h3>
+                <ul>
+                    <li>Strong data augmentation (rotation, flip, brightness, contrast)</li>
+                    <li>Label smoothing for better generalization</li>
+                    <li>Class weight balancing</li>
+                    <li>Two-stage training (head + fine-tuning)</li>
+                    <li>Cosine decay learning rate schedule</li>
+                </ul>
+            </div>
+
+            <div class="about-card">
+                <h2>📊 Results & Performance</h2>
+                <p><strong>Validation Accuracy:</strong> ~85-90%</p>
+                <p><strong>Inference Time:</strong> ~50-200ms</p>
+                <p><strong>Model Size:</strong> 12.64 MB</p>
+                <p><strong>Deployment:</strong> Web-based and mobile-ready</p>
+            </div>
+
+            <div class="about-card">
+                <h2>🌟 Key Features</h2>
+                <ul>
+                    <li>Real-time bug bite classification</li>
+                    <li>Confidence scores and top-3 predictions</li>
+                    <li>Comprehensive first aid database</li>
+                    <li>Educational information for each bug type</li>
+                    <li>Responsive, mobile-friendly design</li>
+                    <li>Ethical AI with clear medical disclaimer</li>
+                </ul>
+            </div>
+
+            <div class="about-card">
+                <h2>💡 Technical Stack</h2>
+                <p><strong>Deep Learning:</strong> TensorFlow, Keras</p>
+                <p><strong>Model:</strong> EfficientNetB2 + Pattern Extraction</p>
+                <p><strong>Backend:</strong> Flask (Python)</p>
+                <p><strong>Frontend:</strong> HTML5, CSS3, JavaScript</p>
+                <p><strong>Preprocessing:</strong> OpenCV, NumPy</p>
+            </div>
+
+            <div class="about-card">
+                <h2>🎯 Future Work</h2>
+                <ul>
+                    <li>Expand to more bug bite types</li>
+                    <li>Develop mobile applications (iOS/Android)</li>
+                    <li>Integrate with healthcare systems</li>
+                    <li>Add multi-language support</li>
+                    <li>Implement user feedback system</li>
+                    <li>Continuous model improvement with new data</li>
+                </ul>
+            </div>
+
+            <div class="about-card">
+                <h2>🙏 Acknowledgments</h2>
+                <p>Special thanks to:</p>
+                <ul>
+                    <li>EARIST College of Architecture and Fine Arts</li>
+                    <li>Thesis adviser and panel members</li>
+                    <li>Classmates and colleagues for support</li>
+                    <li>Open-source community for tools and libraries</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="action-section">
+            <a href="/classifier" class="btn btn-primary btn-large">Try the Classifier</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

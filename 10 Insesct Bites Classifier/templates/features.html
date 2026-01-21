@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">🔬 Pattern Features Analysis with EfficientNetB2</h1>
+    
+    <div class="alert alert-info">
+        <h5>38 Diagnostic Features Extracted from Bug Bite Images</h5>
+        <p>The AI model analyzes these 38 features combined with EfficientNetB2 deep learning to identify the type of insect bite and provide accurate diagnosis. EfficientNetB2 is a state-of-the-art efficient neural network that provides powerful image understanding with optimized performance.</p>
+    </div>
+
+    <!-- Feature Statistics Table -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">📊 Feature Statistics</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>Feature Name</th>
+                            <th>Mean</th>
+                            <th>Std Dev</th>
+                            <th>Importance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Bite Detection Features -->
+                        <tr class="table-warning">
+                            <td>0</td>
+                            <td>📍 <strong>num_bites</strong><br><small>Number of detected bite regions</small></td>
+                            <td>0.6059</td>
+                            <td>0.1242</td>
+                            <td>⭐⭐⭐</td>
+                        </tr>
+
+                        <!-- LAB Color Features -->
+                        <tr class="table-info">
+                            <td>1</td>
+                            <td>🎨 <strong>meanL</strong><br><small>LAB Lightness</small></td>
+                            <td>0.1509</td>
+                            <td>0.0756</td>
+                            <td>⭐⭐</td>
+                        </tr>
+                        <tr class="table-info">
+                            <td>2</td>
+                            <td>🎨 <strong>stdL</strong><br><small>LAB Lightness variation</small></td>
+                            <td>0.5663</td>
+                            <td>0.0399</td>
+                            <td>⭐⭐</td>
+                        </tr>
+                        <tr class="table-info">
+                            <td>3</td>
+                            <td>🎨 <strong>meanA</strong><br><small>LAB Green-Red channel</small></td>
+                            <td>0.5844</td>
+                            <td>0.0508</td>
+                            <td>⭐⭐⭐</td>
+                        </tr>
+                        <tr class="table-info">
+                            <td>4</td>
+                            <td>🎨 <strong>meanB</strong><br><small>LAB Yellow-Blue channel</small></td>
+                            <td>0.1405</td>
+                            <td>0.1590</td>
+                            <td>⭐⭐⭐</td>
+                        </tr>
+
+                        <!-- Shape Features -->
+                        <tr class="table-success">
+                            <td>5</td>
+                            <td>🔴 <strong>circularity</strong><br><small>How round the bite is (0=sharp, 1=circular)</small></td>
+                            <td>0.1264</td>
+                            <td>0.1318</td>
+                            <td>⭐⭐</td>
+                        </tr>
+                        <tr class="table-success">
+                            <td>6</td>
+                            <td>📐 <strong>edge_sharp</strong><br><small>Edge sharpness/definition</small></td>
+                            <td>0.4191</td>
+                            <td>0.1731</td>
+                            <td>⭐⭐⭐</td>
+                        </tr>
+
+                        <!-- Texture Features -->
+                        <tr class="table-secondary">
+                            <td>7</td>
+                            <td>🌊 <strong>texture_mean</strong><br><small>Average texture roughness</small></td>
+                            <td>0.7302</td>
+                            <td>0.1465</td>
+                            <td>⭐⭐⭐</td>
+                        </tr>
+                        <tr class="table-secondary">
+                            <td>8</td>
+                            <td>🌊 <strong>texture_std</strong><br><small>Texture variation</small></td>
+                            <td>0.5000</td>
+                            <td>0.0000</td>
+                            <td>⭐</td>
+                        </tr>
+                        <tr class="table-secondary">
+                            <td>9</td>
+                            <td>🌊 <strong>texture_diff</strong><br><small>Local texture differences</small></td>
+                            <td>0.0407</td>
+                            <td>0.0376</td>
+                            <td>⭐</td>
+                        </tr>
+
+                        <!-- RGB Color Features -->
+                        <tr class="table-info">
+                            <td>10</td>
+                            <td>🎨 <strong>meanR</strong><br><small>Average Red intensity</small></td>
+                            <td>0.1664</td>
+                            <td>0.0722</td>
+                            <td>⭐⭐⭐</td>
+                        </tr>
+                        <tr class="table-info">
+                            <td>11</td>
+                            <td>🎨 <strong>meanG</strong><br><small>Average Green intensity</small></td>
+                            <td>0.0895</td>
+                            <td>0.2033</td>
+                            <td>⭐⭐</td>
+                        </tr>
+                        <tr class="table-info">
+                            <td>12</td>
+                            <td>🎨 <strong>meanB</strong><br><small>Average Blue intensity</small></td>
+                            <td>0.3747</td>
+                            <td>0.2073</td>
+                            <td>⭐⭐⭐</td>
+                        </tr>
+
+                        <!-- HSV Color Features -->
+                        <tr class="table-info">
+                            <td>13</td>
+                            <td>🎨 <strong>meanH</strong><br><small>Hue (color type)</small></td>
+                            <td>0.1065</td>
+                            <td>0.2341</td>
+                            <td>⭐⭐</td>
+                        </tr>
+                        <tr class="table-info">
+                            <td>14</td>
+                            <td>🎨 <strong>meanS</strong><br><small>Saturation (color intensity)</small></td>
+                            <td>0.9615</td>
+                            <td>0.0671</td>
+                            <td>⭐⭐⭐</td>
+                        </tr>
+                        <tr class="table-info">
+                            <td>15</td>
+                            <td>🎨 <strong>meanV</strong><br><small>Value/Brightness</small></td>
+                            <td>0.4644</td>
+                            <td>1.7285</td>
+                            <td>⭐⭐⭐⭐⭐</td>
+                        </tr>
+                        <tr class="table-info">
+                            <td>16</td>
+                            <td>🎨 <strong>stdH</strong><br><small>Hue variation</small></td>
+                            <td>0.1795</td>
+                            <td>0.2383</td>
+                            <td>⭐⭐</td>
+                        </tr>
+                        <tr class="table-info">
+                            <td>17</td>
+                            <td>🎨 <strong>stdS</strong><br><small>Saturation variation</small></td>
+                            <td>0.5788</td>
+                            <td>0.1260</td>
+                            <td>⭐⭐</td>
+                        </tr>
+                        <tr class="table-info">
+                            <td>18</td>
+                            <td>🎨 <strong>stdV</strong><br><small>Brightness variation</small></td>
+                            <td>0.1521</td>
+                            <td>0.0726</td>
+                            <td>⭐⭐</td>
+                        </tr>
+
+                        <!-- Contour Features -->
+                        <tr class="table-success">
+                            <td>19</td>
+                            <td>📐 <strong>avg_contour_area</strong><br><small>Average bite area</small></td>
+                            <td>0.1847</td>
+                            <td>0.1546</td>
+                            <td>⭐⭐⭐</td>
+                        </tr>
+                        <tr class="table-success">
+                            <td>20</td>
+                            <td>📐 <strong>avg_contour_perimeter</strong><br><small>Average bite edge length</small></td>
+                            <td>0.5000</td>
+                            <td>0.0000</td>
+                            <td>⭐</td>
+                        </tr>
+                        <tr class="table-success">
+                            <td>21</td>
+                            <td>📐 <strong>max_contour_area</strong><br><small>Largest bite size</small></td>
+                            <td>0.5000</td>
+                            <td>0.0000</td>
+                            <td>⭐</td>
+                        </tr>
+
+                        <!-- Red Region Features -->
+                        <tr class="table-danger">
+                            <td>22</td>
+                            <td>🔴 <strong>red_saturation</strong><br><small>Saturation of red region</small></td>
+                            <td>0.5000</td>
+                            <td>0.0000</td>
+                            <td>⭐</td>
+                        </tr>
+                        <tr class="table-danger">
+                            <td>23</td>
+                            <td>🔴 <strong>red_brightness</strong><br><small>Brightness of red region</small></td>
+                            <td>0.5000</td>
+                            <td>0.0000</td>
+                            <td>⭐</td>
+                        </tr>
+                        <tr class="table-danger">
+                            <td>24</td>
+                            <td>🔴 <strong>red_area_ratio</strong><br><small>Proportion of red pixels</small></td>
+                            <td>0.5000</td>
+                            <td>0.0000</td>
+                            <td>⭐</td>
+                        </tr>
+                        <tr class="table-danger">
+                            <td>25</td>
+                            <td>🔴 <strong>red_intensity</strong><br><small>Intensity of red coloring</small></td>
+                            <td>0.5000</td>
+                            <td>0.0000</td>
+                            <td>⭐</td>
+                        </tr>
+
+                        <!-- Variance Features -->
+                        <tr class="table-warning">
+                            <td>26</td>
+                            <td>📊 <strong>var_red</strong><br><small>Red channel variance</small></td>
+                            <td>0.5000</td>
+                            <td>0.0000</td>
+                            <td>⭐</td>
+                        </tr>
+                        <tr class="table-warning">
+                            <td>27</td>
+                            <td>📊 <strong>var_green</strong><br><small>Green channel variance</small></td>
+                            <td>0.5000</td>
+                            <td>0.0000</td>
+                            <td>⭐</td>
+                        </tr>
+                        <tr class="table-warning">
+                            <td>28</td>
+                            <td>📊 <strong>var_blue</strong><br><small>Blue channel variance</small></td>
+                            <td>1.3330</td>
+                            <td>0.2832</td>
+                            <td>⭐⭐⭐</td>
+                        </tr>
+
+                        <!-- Range Features -->
+                        <tr class="table-primary">
+                            <td>29</td>
+                            <td>📏 <strong>luminance_range</strong><br><small>Light-dark contrast</small></td>
+                            <td>0.7749</td>
+                            <td>0.5256</td>
+                            <td>⭐⭐⭐⭐</td>
+                        </tr>
+                        <tr class="table-primary">
+                            <td>30</td>
+                            <td>📏 <strong>a_range</strong><br><small>Green-Red color range</small></td>
+                            <td>2.0706</td>
+                            <td>0.4377</td>
+                            <td>⭐⭐⭐⭐</td>
+                        </tr>
+                        <tr class="table-primary">
+                            <td>31</td>
+                            <td>📏 <strong>b_range</strong><br><small>Yellow-Blue color range</small></td>
+                            <td>0.7171</td>
+                            <td>0.3604</td>
+                            <td>⭐⭐⭐</td>
+                        </tr>
+
+                        <!-- Combined Features -->
+                        <tr class="table-warning">
+                            <td>32</td>
+                            <td>🔗 <strong>edge_shape_combined</strong><br><small>Combined edge & shape metric</small></td>
+                            <td>1.3303</td>
+                            <td>0.2837</td>
+                            <td>⭐⭐⭐</td>
+                        </tr>
+                        <tr class="table-warning">
+                            <td>33</td>
+                            <td>🔗 <strong>bite_red_combined</strong><br><small>Bite detection + red region</small></td>
+                            <td>0.7683</td>
+                            <td>0.5217</td>
+                            <td>⭐⭐⭐⭐</td>
+                        </tr>
+                        <tr class="table-warning">
+                            <td>34</td>
+                            <td>🔗 <strong>blue_intensity_red_region</strong><br><small>Blue in red region</small></td>
+                            <td>2.0700</td>
+                            <td>0.4377</td>
+                            <td>⭐⭐⭐⭐</td>
+                        </tr>
+                        <tr class="table-warning">
+                            <td>35</td>
+                            <td>🔗 <strong>green_intensity_red_region</strong><br><small>Green in red region</small></td>
+                            <td>0.7148</td>
+                            <td>0.3584</td>
+                            <td>⭐⭐⭐</td>
+                        </tr>
+                        <tr class="table-warning">
+                            <td>36</td>
+                            <td>🔗 <strong>red_std_red_region</strong><br><small>Red variation in red region</small></td>
+                            <td>0.5790</td>
+                            <td>0.1260</td>
+                            <td>⭐⭐</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature Groups -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">🎨 Color Features (44.7%)</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>17 out of 38 features</strong></p>
+                    <ul>
+                        <li><strong>LAB Color:</strong> Features 1-4</li>
+                        <li><strong>RGB Color:</strong> Features 10-12</li>
+                        <li><strong>HSV Color:</strong> Features 13-18</li>
+                    </ul>
+                    <p class="text-muted"><small>The model heavily relies on color to distinguish between different insect bites, as different insects cause distinctly colored reactions.</small></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">📐 Shape & Texture (26.3%)</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>10 out of 38 features</strong></p>
+                    <ul>
+                        <li><strong>Shape:</strong> Features 5, 19-21</li>
+                        <li><strong>Texture:</strong> Features 7-9</li>
+                        <li><strong>Edges:</strong> Feature 6</li>
+                    </ul>
+                    <p class="text-muted"><small>Shape and texture analysis helps identify bite patterns and surface characteristics unique to each insect type.</small></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">📍 Bite Detection (18.4%)</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>7 out of 38 features</strong></p>
+                    <ul>
+                        <li><strong>Detection:</strong> Feature 0 (num_bites)</li>
+                        <li><strong>Combined Metrics:</strong> Features 32-36</li>
+                    </ul>
+                    <p class="text-muted"><small>Identifies how many distinct bite marks are present and their characteristics.</small></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">📏 Range Metrics (10.5%)</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>4 out of 38 features</strong></p>
+                    <ul>
+                        <li><strong>Luminance Range:</strong> Feature 29</li>
+                        <li><strong>Color Ranges:</strong> Features 30-31</li>
+                    </ul>
+                    <p class="text-muted"><small>Measures the variation and contrast in colors and brightness.</small></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Most Important Features -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">⭐ Most Important Features (Highest Variance)</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-success">
+                <p><strong>Feature 15 - meanV (HSV Brightness):</strong> Std = 1.73 - The strongest predictor! Brightness variation helps distinguish different types of insect bites.</p>
+            </div>
+            <div class="alert alert-success">
+                <p><strong>Feature 29 - luminance_range:</strong> Std = 0.53 - Light-dark contrast is critical for identification.</p>
+            </div>
+            <div class="alert alert-success">
+                <p><strong>Feature 33 - bite_red_combined:</strong> Std = 0.52 - Combined bite detection with red region analysis.</p>
+            </div>
+            <div class="alert alert-success">
+                <p><strong>Features 30 & 34 - Color ranges:</strong> Std = 0.44 - LAB green-red channel range is highly discriminative.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- How Analysis Works -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">🤖 How the AI Uses These Features</h5>
+        </div>
+        <div class="card-body">
+            <ol>
+                <li><strong>Image Upload:</strong> You upload a photo of the insect bite</li>
+                <li><strong>Preprocessing:</strong> Image is resized to 224×224 pixels and normalized</li>
+                <li><strong>Feature Extraction:</strong> All 38 features are automatically extracted from the image</li>
+                <li><strong>Feature Normalization:</strong> Features are normalized using mean and standard deviation values learned from training data</li>
+                <li><strong>Deep Learning Analysis:</strong> The neural network analyzes both the visual features AND the extracted numerical features</li>
+                <li><strong>Classification:</strong> The model outputs probabilities for each of the 12 insect bite types</li>
+                <li><strong>Diagnosis:</strong> The bite type with highest confidence is recommended with first aid information</li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table-info { background-color: #e7f3ff; }
+    .table-success { background-color: #e8f5e9; }
+    .table-warning { background-color: #fff3e0; }
+    .table-danger { background-color: #ffebee; }
+    .table-secondary { background-color: #f5f5f5; }
+    .table-primary { background-color: #e3f2fd; }
+</style>
+
+{% endblock %}

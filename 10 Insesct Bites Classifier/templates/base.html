@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Insect and Bug Bite Classifier{% endblock %}</title>
+    <!-- Modern font and Bootstrap for quicker presentable layout -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <style>
+        body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+        .hero-title { font-weight: 700; }
+        .nav-brand { display: flex; align-items: center; gap: 12px; }
+        .nav-brand img { max-width: 48px; height: auto; }
+    </style>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
+        <div class="container">
+                <a class="navbar-brand nav-brand" href="/">
+                <img src="/static/images/logo.png" alt="Logo">
+                <span class="h5 mb-0">Insect and Bug Bite Classifier</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="mainNav">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.path == '/about' %}active{% endif %}" href="/about">About</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.path == '/how_it_works' %}active{% endif %}" href="/how_it_works">How It Works</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container py-4">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <p class="mb-1">&copy; 2025 Insect and Bug Bite Classifier</p>
+                    <div><small>EARIST — College of Computing Studies • Thesis Project</small></div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+    <!-- Global Disclaimer Modal (available on all pages) -->
+    <div id="disclaimerModal" class="disclaimer-modal" style="display:none;">
+        <div class="disclaimer-content">
+            <h2>Medical Disclaimer</h2>
+            <div class="disclaimer-text">
+                <h2><strong>Please Read Carefully</strong></h2>
+
+                <h4>🚫 Not Medical Advice</h4>
+                <p>This Bug Bite Classifier is designed for educational and informational purposes only. It uses artificial intelligence to help identify potential bug bites based on images. The information provided by this application should NOT be used as a substitute for professional medical advice, diagnosis, or treatment.</p>
+
+                <h4>👨‍⚕️ Consult Healthcare Providers</h4>
+                <p>If you believe you have been bitten by an insect or are experiencing symptoms, please consult with a healthcare professional for proper diagnosis and treatment.</p>
+
+                <h4>🚨 Seek Immediate Medical Attention</h4>
+                <p>If you experience severe symptoms such as:</p>
+                <ul>
+                    <li>Difficulty breathing</li>
+                    <li>Swelling of the face or throat</li>
+                    <li>Rapid heartbeat</li>
+                    <li>Dizziness or loss of consciousness</li>
+                    <li>Signs of infection (increased redness, warmth, pus)</li>
+                </ul>
+
+                <h4>⚖️ CNN Model Classification Limitations</h4>
+                <p>The CNN Model classification is not 100% accurate and may produce incorrect results. Factors that can affect accuracy include:</p>
+                <ul>
+                    <li>Image quality and lighting</li>
+                    <li>Angle and focus of the photo</li>
+                    <li>Similarity between different bug bites</li>
+                    <li>Individual variations in skin reactions</li>
+                </ul>
+
+                <h4>🚫 Emergency Situations</h4>
+                <p>This application is NOT designed for emergency situations. If you are experiencing a medical emergency, call emergency services immediately.</p>
+
+                <h4>📚 Educational Purpose</h4>
+                <p>This system was developed as a thesis project for educational purposes at EARIST (Eulogio "Amang" Rodriguez Institute of Science & Technology), College of Computing Studies.</p>
+            </div>
+            <div class="disclaimer-checkbox">
+                <input type="checkbox" id="disclaimerCheckbox">
+                <label for="disclaimerCheckbox">I understand and agree to the disclaimer</label>
+            </div>
+            <div class="disclaimer-buttons">
+                <button class="btn-cancel" id="disclaimerCancel">Cancel</button>
+                <button class="btn-proceed" id="disclaimerProceed" disabled>Proceed to Classifier</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

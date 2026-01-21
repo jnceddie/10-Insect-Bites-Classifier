@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}How It Works - Bug Bite Identifier{% endblock %}
+
+{% block content %}
+<section class="how-it-works-section">
+    <div class="container">
+        <h1 class="page-title">How It Works</h1>
+        <p class="page-subtitle">Technical overview of the bug bite classification system</p>
+
+        <div class="workflow-diagram">
+            <div class="workflow-step">
+                <div class="step-number">1</div>
+                <h3>Image Upload</h3>
+                <p>User uploads a bug bite image through the web interface</p>
+            </div>
+            <div class="workflow-arrow">→</div>
+            <div class="workflow-step">
+                <div class="step-number">2</div>
+                <h3>Preprocessing</h3>
+                <p>Image is resized to 224×224 and normalized using EfficientNetB2 format</p>
+            </div>
+            <div class="workflow-arrow">→</div>
+            <div class="workflow-step">
+                <div class="step-number">3</div>
+                <h3>Pattern Extraction</h3>
+                <p>Automatic extraction of 38 diagnostic features (color, shape, texture, bite detection)</p>
+            </div>
+            <div class="workflow-arrow">→</div>
+            <div class="workflow-step">
+                <div class="step-number">4</div>
+                <h3>Classification</h3>
+                <p>EfficientNetB2 neural network with Pattern Fusion module processes image and features</p>
+            </div>
+            <div class="workflow-arrow">→</div>
+            <div class="workflow-step">
+                <div class="step-number">5</div>
+                <h3>Results</h3>
+                <p>Display prediction, confidence score, and first aid information</p>
+            </div>
+        </div>
+
+        <div class="technical-details">
+            <div class="detail-card">
+                <h2>🧠 Model Architecture: EfficientNetB2</h2>
+                <h3>EfficientNetB2 Backbone</h3>
+                <ul>
+                    <li><strong>Compound Scaling:</strong> Balances depth, width, and resolution (260M parameters)</li>
+                    <li>Mobile Inverted Residual Blocks (MBConv) for efficiency</li>
+                    <li>Pre-trained on ImageNet for transfer learning</li>
+                    <li>Optimized for both mobile and web deployment</li>
+                    <li>Input: 260×260 images (internally resized from 224×224)</li>
+                </ul>
+
+                <h3>Pattern Extraction Module</h3>
+                <ul>
+                    <li><strong>38 Features Extracted:</strong></li>
+                    <li>Bite Detection: Red region analysis and bite count</li>
+                    <li>Color Features: LAB (4 features), RGB (3 features), HSV (6 features)</li>
+                    <li>Shape Features: Circularity, contour analysis (3 features)</li>
+                    <li>Texture Features: Edge sharpness, Laplacian operator (3 features)</li>
+                    <li>Red Region Analysis: Saturation, brightness, intensity (4 features)</li>
+                    <li>Statistical Features: Variance, range, combined metrics</li>
+                </ul>
+
+                <h3>Fusion Architecture</h3>
+                <ul>
+                    <li><strong>Dual Input Processing:</strong></li>
+                    <li>Image Features: EfficientNetB2 output (1408 dimensions)</li>
+                    <li>Pattern Features: Extracted 38 diagnostic features (normalized)</li>
+                    <li><strong>Concatenated Fusion:</strong> Combined features fed to classification head</li>
+                    <li>Classification Head: Dense layers → Softmax output (12 classes)</li>
+                </ul>
+            </div>
+
+            <div class="detail-card">
+                <h2>📊 Training Process</h2>
+                <h3>Dataset</h3>
+                <ul>
+                    <li>10 bug bite classes</li>
+                    <li>Training set with data augmentation</li>
+                    <li>Validation set for model evaluation</li>
+                    <li>Balanced class distribution</li>
+                </ul>
+
+                <h3>Data Augmentation</h3>
+                <ul>
+                    <li>Random horizontal flips</li>
+                    <li>Random rotation (90° increments)</li>
+                    <li>Brightness adjustment (±8%)</li>
+                    <li>Contrast adjustment (80-120%)</li>
+                    <li>Saturation adjustment (80-120%)</li>
+                    <li>Hue adjustment (±2%)</li>
+                    <li>Random cropping</li>
+                </ul>
+
+                <h3>Training Strategy</h3>
+                <ul>
+                    <li><strong>Stage 1:</strong> Train classification head (6 epochs)</li>
+                    <li><strong>Stage 2:</strong> Fine-tune last 160 layers (24 epochs)</li>
+                    <li>Cosine decay learning rate schedule</li>
+                    <li>Label smoothing (0.04) for regularization</li>
+                    <li>Class weight balancing</li>
+                </ul>
+            </div>
+
+            <div class="detail-card">
+                <h2>⚙️ Implementation Details</h2>
+                <h3>Input Processing</h3>
+                <ul>
+                    <li>Input size: 224×224×3 (RGB)</li>
+                    <li>Preprocessing: EfficientNetB2 normalization (scales to appropriate range)</li>
+                    <li>Automatic pattern feature extraction from preprocessed image</li>
+                    <li>Feature normalization using dataset statistics</li>
+                </ul>
+
+                <h3>Output</h3>
+                <ul>
+                    <li>12-class probability distribution (10 bug types + 2 special classes)</li>
+                    <li>Softmax activation for probabilities</li>
+                    <li>Confidence score for top prediction (98-99% boosted for demo)</li>
+                    <li>Top-3 predictions displayed with confidence scores</li>
+                </ul>
+
+                <h3>Performance</h3>
+                <ul>
+                    <li>Inference time: ~100-300ms (including pattern extraction)</li>
+                    <li>Model size: ~12.64 MB (efficient for deployment)</li>
+                    <li>Total parameters: ~3.2 million</li>
+                    <li>Deployment: Web, mobile, and edge devices ready</li>
+                </ul>
+            </div>
+
+            <div class="detail-card">
+                <h2>🔬 Pattern Features Explained</h2>
+                <ol>
+                    <li><strong>Bite Count:</strong> Number of red regions detected (normalized)</li>
+                    <li><strong>Color Features:</strong> LAB color space statistics for better color representation</li>
+                    <li><strong>Shape Features:</strong> Circularity of detected regions</li>
+                    <li><strong>Texture Features:</strong> Edge sharpness using Laplacian operator</li>
+                    <li><strong>Channel Statistics:</strong> RGB mean values</li>
+                </ol>
+            </div>
+
+            <div class="detail-card">
+                <h2>🌐 Web Application</h2>
+                <h3>Backend (Flask)</h3>
+                <ul>
+                    <li>RESTful API design</li>
+                    <li>Multiple endpoints (prediction, health check, info)</li>
+                    <li>Image upload and preprocessing</li>
+                    <li>First aid information database</li>
+                </ul>
+
+                <h3>Frontend</h3>
+                <ul>
+                    <li>Responsive HTML5/CSS3/JavaScript</li>
+                    <li>Drag-and-drop file upload</li>
+                    <li>Real-time progress indicators</li>
+                    <li>Mobile-friendly design</li>
+                </ul>
+            </div>
+
+            <div class="detail-card">
+                <h2>✅ Advantages of This Approach</h2>
+                <ul>
+                    <li><strong>Single-Input Design:</strong> Easier deployment and usage</li>
+                    <li><strong>Automatic Feature Extraction:</strong> No manual feature engineering required</li>
+                    <li><strong>Efficient Architecture:</strong> EfficientNetB2 optimized for speed and size</li>
+                    <li><strong>Pattern-Aware:</strong> Combines deep learning with traditional computer vision</li>
+                    <li><strong>Transfer Learning:</strong> Leverages pre-trained ImageNet weights</li>
+                    <li><strong>Production-Ready:</strong> Can be deployed on web and mobile platforms</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="action-section">
+            <a href="/classifier" class="btn btn-primary btn-large">Try It Yourself</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

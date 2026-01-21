@@ -1,0 +1,413 @@
+{% extends "base.html" %}
+
+{% block title %}Classifier - Bug Bite Identifier{% endblock %}
+
+{% block content %}
+<style>
+    #imagePreview {
+        display: block !important;
+        max-width: 100%;
+        max-height: 400px;
+        margin: 20px auto;
+        border-radius: 8px;
+        object-fit: contain;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    #imagePreview:hover {
+        transform: scale(1.02);
+        box-shadow: 0 6px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .upload-area {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+    
+    .upload-area:hover {
+        background-color: #f8f9ff;
+        cursor: pointer;
+    }
+    
+    .upload-actions {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
+    
+    .results-card button {
+        display: block;
+        margin: 20px auto 0;
+        transition: all 0.3s ease;
+    }
+    
+    .results-card button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .info-block {
+        background: linear-gradient(135deg, #f5f7ff 0%, #fff 100%);
+        border-left: 4px solid #667eea;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .info-block:hover {
+        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+        transform: translateX(4px);
+    }
+    
+    .top-predictions {
+        margin: 20px 0;
+    }
+    
+    .prediction-item {
+        background: #f8f9ff;
+        padding: 12px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .prediction-item:hover {
+        background: #eff2ff;
+        box-shadow: 0 2px 6px rgba(102, 126, 234, 0.15);
+    }
+    
+    .supported-bugs {
+        background: linear-gradient(135deg, var(--gh-bg-secondary) 0%, var(--gh-bg-tertiary) 100%);
+        border: 2px solid var(--gh-accent);
+        border-radius: 8px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 12px rgba(88, 166, 255, 0.15);
+    }
+    
+    .supported-bugs h3 {
+        color: var(--gh-accent);
+        margin-bottom: 20px;
+        font-size: 1.3rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .bugs-list {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 12px;
+    }
+    
+    .bug-item {
+        background: linear-gradient(135deg, rgba(88, 166, 255, 0.1) 0%, rgba(63, 185, 80, 0.05) 100%);
+        border: 1.5px solid var(--gh-border);
+        padding: 15px;
+        border-radius: 6px;
+        text-align: center;
+        color: var(--gh-text-primary);
+        font-size: 0.95rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .bug-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(88, 166, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+    }
+    
+    .bug-item:hover {
+        background: linear-gradient(135deg, rgba(88, 166, 255, 0.2) 0%, rgba(63, 185, 80, 0.1) 100%);
+        border-color: var(--gh-accent);
+        box-shadow: 0 4px 12px rgba(88, 166, 255, 0.25);
+        transform: translateY(-4px);
+    }
+    
+    .bug-item:hover::before {
+        left: 100%;
+    }
+    
+    .upload-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        border-bottom: 2px solid var(--gh-border);
+    }
+    
+    .tab-btn {
+        background: none;
+        border: none;
+        color: var(--gh-text-secondary);
+        padding: 12px 20px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border-bottom: 3px solid transparent;
+    }
+    
+    .tab-btn.active {
+        color: var(--gh-accent);
+        border-bottom-color: var(--gh-accent);
+    }
+    
+    .tab-btn:hover {
+        color: var(--gh-accent);
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    #cameraContainer {
+        position: relative;
+        margin: 20px 0;
+        border-radius: 8px;
+        overflow: hidden;
+        background-color: #000;
+    }
+    
+    #videoPreview {
+        width: 100%;
+        height: auto;
+        max-height: 500px;
+        display: block;
+        border-radius: 8px;
+    }
+    
+    .camera-controls {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin: 20px 0;
+        flex-wrap: wrap;
+    }
+    
+    .camera-btn {
+        padding: 10px 20px;
+        border: 1px solid var(--gh-accent);
+        background-color: transparent;
+        color: var(--gh-accent);
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .camera-btn:hover {
+        background-color: var(--gh-accent);
+        color: var(--gh-bg-primary);
+    }
+    
+    .camera-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    #canvasPreview {
+        display: none;
+        max-width: 100%;
+        max-height: 400px;
+        margin: 20px auto;
+        border-radius: 8px;
+        border: 1px solid var(--gh-border);
+    }
+    
+    .prediction-analysis {
+        background: linear-gradient(135deg, rgba(88, 166, 255, 0.1) 0%, rgba(63, 185, 80, 0.05) 100%);
+        border: 1px solid var(--gh-border);
+        border-radius: 6px;
+        padding: 15px;
+        margin-top: 15px;
+    }
+    
+    .analysis-title {
+        color: var(--gh-accent);
+        font-weight: 600;
+        margin-bottom: 10px;
+        font-size: 0.95rem;
+    }
+    
+    .analysis-text {
+        color: var(--gh-text-primary);
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+    
+    @media (max-width: 1200px) {
+        .bugs-list {
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .bugs-list {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        
+        .supported-bugs {
+            padding: 20px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .bugs-list {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+
+<section class="classifier-section">
+    <div class="container">
+        <h1 class="page-title">Insect and Bug Bite Classifier</h1>
+        <p class="page-subtitle">Upload an image to identify the type of bug bite</p>
+
+        <div class="supported-bugs">
+            <h3>✓ Supported Bug Bites</h3>
+            <div class="bugs-list">
+                <div class="bug-item">Mosquitos</div>
+                <div class="bug-item">Ticks</div>
+                <div class="bug-item">Bedbugs</div>
+                <div class="bug-item">Ants</div>
+                <div class="bug-item">Spiders</div>
+                <div class="bug-item">Scabies Mite</div>
+                <div class="bug-item">Bees</div>
+                <div class="bug-item">Fleas</div>
+                <div class="bug-item">Chiggers</div>
+                <div class="bug-item">Stablefly</div>
+            </div>
+        </div>
+
+        <div class="classifier-container">
+            <!-- Upload Area -->
+            <div class="upload-card">
+                <div class="upload-tabs">
+                    <button class="tab-btn active" data-tab="upload-tab">📁 Upload File</button>
+                    <button class="tab-btn" data-tab="camera-tab">📷 Camera Capture</button>
+                </div>
+                
+                <!-- Upload Tab -->
+                <div id="upload-tab" class="tab-content active">
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📸</div>
+                        <h3>Click to upload or drag and drop</h3>
+                        <p>Supports: JPG, PNG, GIF, BMP (Max 16MB)</p>
+                        <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                    </div>
+                    
+                    <img id="imagePreview" alt="Preview" style="display: none;">
+                </div>
+                
+                <!-- Camera Tab -->
+                <div id="camera-tab" class="tab-content">
+                    <div id="cameraContainer">
+                        <video id="videoPreview" playsinline></video>
+                    </div>
+                    <div class="camera-controls">
+                        <button class="camera-btn" id="startCameraBtn">Start Camera</button>
+                        <button class="camera-btn" id="stopCameraBtn" disabled>Stop Camera</button>
+                        <button class="camera-btn" id="capturePhotoBtn" disabled>Capture Photo</button>
+                    </div>
+                    <canvas id="canvasPreview"></canvas>
+                </div>
+                
+                <div class="upload-actions">
+                    <button class="btn btn-primary" id="analyzeBtn" style="display: none;">
+                        Analyze Image
+                    </button>
+                </div>
+
+                <div class="loading" id="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Analyzing image...</p>
+                </div>
+
+                <div class="error-message" id="errorMessage" style="display: none;"></div>
+            </div>
+
+            <!-- Results Area -->
+            <div id="results" style="display: none;">
+                <div class="results-card">
+                    <!-- Main Prediction -->
+                    <div class="prediction-header">
+                        <h2>Classification Result</h2>
+                    </div>
+                    
+                    <div class="main-prediction">
+                        <div class="predicted-class" id="predictedClass"></div>
+                        <div class="confidence-score" id="confidence"></div>
+                    </div>
+
+                    <!-- Top 3 Predictions -->
+                    <div class="top-predictions">
+                        <h3>Top 3 Predictions</h3>
+                        <div id="topPredictions"></div>
+                        <div class="prediction-analysis">
+                            <div class="analysis-title">Clinical Decision Support Analysis</div>
+                            <div class="analysis-text" id="predictionAnalysis"></div>
+                        </div>
+                    </div>
+
+                    <!-- First Aid Information -->
+                    <div class="first-aid-section" id="firstAidSection">
+                        <h3>📋 First Aid Information</h3>
+                        
+                        <div class="first-aid-content">
+                            <div class="info-block">
+                                <h4>Symptoms</h4>
+                                <p id="symptoms"></p>
+                            </div>
+
+                            <div class="info-block">
+                                <h4>First Aid Steps</h4>
+                                <ol id="firstAidSteps"></ol>
+                            </div>
+
+                            <div class="info-block">
+                                <h4>When to Seek Medical Help</h4>
+                                <p id="whenToSeekHelp"></p>
+                            </div>
+
+                            <div class="info-block">
+                                <h4>Severity Level</h4>
+                                <span class="severity-badge" id="severity"></span>
+                            </div>
+
+                            <div class="info-block">
+                                <h4>Prevention Tips</h4>
+                                <p id="prevention"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- New Analysis Button -->
+                    <button class="btn btn-primary btn-large" onclick="location.reload()">
+                        Analyze Another Image
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script src="{{ url_for('static', filename='js/classifier_professional.js') }}"></script>
+{% endblock %}
